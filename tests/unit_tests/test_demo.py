@@ -11,4 +11,4 @@ class TestMaterial:
 
     def test_constructor(self):
         fel = H1Fel(order=3)
-        assert fel.p = 3
+        assert fel.p == 3
