@@ -1,11 +1,11 @@
 import numpy as np
-from element import H1Fel
+from pyfemsolver.element import H1Fel
 from typing import List
-from meshing import Triangulation
+from pyfemsolver.meshing import Triangulation
 
 
 class H1Space:
-    def __init__(self, tri:Triangulation, p):
+    def __init__(self, tri: Triangulation, p):
         self.tri = tri
         self.p = p
         # For each triangle the list contains a Finite element:
@@ -31,14 +31,11 @@ class H1Space:
         dofs = [[] for _ in range(len(tri.trigs))]
         for i, trig in enumerate(tri.trigs):
             trigpoints = trig.points
-            # For each triangle the first dofs are the vertex dofs. 
+            # For each triangle the first dofs are the vertex dofs. "Hat functions"
             # These are numbered according to the vertex number.
             dofs[i].extend([int(p) for p in trigpoints])
-            # Next add those dofs associated with the edges of the element. The global, first edge dof
-            # has the number of vertex dofs as offset, since they come before. Then for each edge, we get a free range of dofs
-            # by counting additionally offsetting with the dof numbers for a single edge (self.elements[i].ndof_facet) times
-            # the global edge number (compare to linear indexing a 2d point cloud - taking ndof_vertex into account, 
-            # it can even be compared by a linear counting of a 3d point cloud)
+            # Next add those dofs associated with the edges of the element. These are functions vanish on all nodes,
+            # and edges except for one edge.
             dofs[i].extend(
                 [
                     self.ndof_vertex + edge * self.elements[i].ndof_facet + j
@@ -46,8 +43,8 @@ class H1Space:
                     for j in range(self.elements[i].ndof_facet)
                 ]
             )
-            # Finally, add the dofs for element bubble functions. The offset now is all vertex plus all edge dofs. Then for the i-th triangle we
-            # find a free spot, by offsetting additionally with the triangle number times the number of inner dofs (self.elements[i].ndof_inner)
+            # Finally, add the dofs for element bubble functions. These fucntions do not couple to other triangles,
+            # they vanish on the complete triangle boundary.
             dofs[i].extend(
                 [self.ndof_vertex + self.ndof_faces + i * self.elements[i].ndof_inner + j for j in range(self.elements[i].ndof_inner)]
             )
@@ -56,15 +53,19 @@ class H1Space:
         for i, edge in enumerate(tri.boundary_edges):
             neighbour = edge.neighbouring_elements[0]
             boundary_dofs[i] = list(edge.points)
-            boundary_dofs[i].extend([self.ndof_vertex + edge.global_edge_nr * self.elements[neighbour].ndof_facet + s for s in range(self.elements[neighbour].ndof_facet)])
-
+            boundary_dofs[i].extend(
+                [
+                    self.ndof_vertex + edge.global_edge_nr * self.elements[neighbour].ndof_facet + s
+                    for s in range(self.elements[neighbour].ndof_facet)
+                ]
+            )
 
         self.boundary_dofs = boundary_dofs  # dofs assoziated with the domain boundary
         self.dofs = dofs  # all dofs
         self.unique_boundary_dofs = sorted(list(set([dof for dofs in self.boundary_dofs for dof in dofs])))
         self.inner_dofs = [i for i in range(self.ndof) if i not in self.unique_boundary_dofs]
 
-    def local_to_global(self, element_matrix, global_matrix, trig_index:int):
+    def local_to_global(self, element_matrix, global_matrix, trig_index: int):
         """Map the local element matrix to the global one."""
         dx, dy = np.meshgrid(self.dofs[trig_index], self.dofs[trig_index])
         global_matrix[dy, dx] += element_matrix
@@ -82,31 +83,40 @@ class H1Space:
 
     def assemble_mass(self, global_mass):
         for i, trig in enumerate(self.tri.trigs):
+            print(f"Mass matrix, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
             element_matrix = self.elements[i].calc_mass_matrix(trig_coords)
             self.local_to_global(element_matrix, global_mass, i)
+        print()
 
     def assemble_gradu_gradv(self, global_gradu_gradv):
         for i, trig in enumerate(self.tri.trigs):
+            print(f"Stiffness, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
             element_matrix = self.elements[i].calc_gradu_gradv_matrix(trig_coords)
             self.local_to_global(element_matrix, global_gradu_gradv, i)
+        print()
 
     def assemble_element_vector(self, global_vector, f):
         for i, trig in enumerate(self.tri.trigs):
+            print(f"Load vector, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
             element_vector = self.elements[i].calc_element_vector(trig_coords, f)
             self.local_to_global_vector(element_vector, global_vector, i)
+        print()
 
     def assemble_boundary_mass(self, global_boundary_mass):
         for i, edge in enumerate(self.tri.boundary_edges):
+            print(f"Boundary mass, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])
             element_matrix = self.elements[i].calc_edge_mass_matrix(edge_coords)
             self.local_to_global_boundary(element_matrix, global_boundary_mass, i)
+        print()
 
     def assemble_boundary_element_vector(self, global_boundary_vector, f):
         for i, edge in enumerate(self.tri.boundary_edges):
+            print(f"Boundary load vector, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])
             element_vector = self.elements[i].calc_edge_element_vector(edge_coords, f)
             self.local_to_global_boundary_vector(element_vector, global_boundary_vector, i)
-
+        print()
