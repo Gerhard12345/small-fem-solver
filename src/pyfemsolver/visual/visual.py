@@ -1,8 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
-from pyfemsolver.meshing import Triangulation
-from pyfemsolver.element import barycentric_coordinates, barycentric_coordinates_line, duffy
-from pyfemsolver.space import H1Space
+from pyfemsolver.solverlib.meshing import Triangulation
+from pyfemsolver.solverlib.element import barycentric_coordinates, barycentric_coordinates_line, duffy
+from pyfemsolver.solverlib.space import H1Space
 
 
 def show_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):

@@ -1,12 +1,12 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pyfemsolver.meshing import generate_points_on_lines
-from pyfemsolver.meshing import generate_inner_points
-from pyfemsolver.meshing import create_delaunay_triangulation
-from pyfemsolver.meshing import iterate_mesh_optimization
-from pyfemsolver.meshing import get_restricted_mesh_size
-from pyfemsolver.meshing import refine_triangulation
-from pyfemsolver.meshing import is_point_on_line_segment
+from pyfemsolver.solverlib.meshing import generate_points_on_lines
+from pyfemsolver.solverlib.meshing import generate_inner_points
+from pyfemsolver.solverlib.meshing import create_delaunay_triangulation
+from pyfemsolver.solverlib.meshing import iterate_mesh_optimization
+from pyfemsolver.solverlib.meshing import get_restricted_mesh_size
+from pyfemsolver.solverlib.meshing import refine_triangulation
+from pyfemsolver.solverlib.meshing import is_point_on_line_segment
 
 if __name__ == "__main__":
     # Configuration with defined hole regions

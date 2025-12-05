@@ -1,6 +1,6 @@
 import numpy as np
 from numpy.typing import NDArray
-from pyfemsolver.space import H1Space
+from pyfemsolver.solverlib.space import H1Space
 from typing import Callable
 
 

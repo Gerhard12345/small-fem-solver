@@ -1,10 +1,9 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pyfemsolver.space import H1Space
-from pyfemsolver.solving import solve_bvp
-from pyfemsolver.visual import show_grid_function
-from pyfemsolver.visual import show_boundary_function
-from pyfemsolver.meshing import generate_mesh
+from pyfemsolver.solverlib.space import H1Space
+from pyfemsolver.solverlib.solving import solve_bvp
+from pyfemsolver.visual.visual import show_grid_function
+from pyfemsolver.solverlib.meshing import generate_mesh
 
 
 def f(x, y):

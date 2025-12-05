@@ -1,7 +1,7 @@
 import numpy as np
-from pyfemsolver.element import H1Fel
+from pyfemsolver.solverlib.element import H1Fel
 from typing import List
-from pyfemsolver.meshing import Triangulation
+from pyfemsolver.solverlib.meshing import Triangulation
 
 
 class H1Space:
