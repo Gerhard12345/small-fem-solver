@@ -51,7 +51,7 @@ def g(p, E, x, y):
     l2 = l[e_2] - l[e_1]
     with np.errstate(divide="ignore", invalid="ignore"):
         # x = l2 / l1
-        x = np.where(l1 + np.abs(l2) <= 1e-16, 0, l2 / l1)
+        x = np.where(l1 == 0, 0, l2 / l1)
     vals_1 = integrated_jacobi_polynomial(p, x, 0)[2:, :]
     vals_2 = np.array([l1**j for j in range(2, p + 1)])
     return vals_1 * vals_2
