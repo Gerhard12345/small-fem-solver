@@ -24,12 +24,12 @@ def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
     vals[1, :] = x + 1
     if n == 1:
         return vals
-    helper = jacobi_polynomial(n + 1, x, alpha)
+    jacobi_poly_vals = jacobi_polynomial(n + 1, x, alpha)
     for j in range(2, n + 1):
         a_1 = (2 * j + 2 * alpha) / ((2 * j + alpha - 1) * (2 * j + alpha))
         a_2 = 2 * alpha / ((2 * j + alpha - 2) * (2 * j + alpha))
         a_3 = (2 * j - 2) / ((2 * j + alpha - 1) * (2 * j + alpha - 2))
-        vals[j, :] = a_1 * helper[j, :] + a_2 * helper[j - 1, :] - a_3 * helper[j - 2, :]
+        vals[j, :] = a_1 * jacobi_poly_vals[j, :] + a_2 * jacobi_poly_vals[j - 1, :] - a_3 * jacobi_poly_vals[j - 2, :]
     return vals
 
 
