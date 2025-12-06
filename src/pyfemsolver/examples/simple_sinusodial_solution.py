@@ -3,6 +3,7 @@ import numpy as np
 from pyfemsolver.solverlib.space import H1Space
 from pyfemsolver.solverlib.solving import solve_bvp
 from pyfemsolver.visual.visual import show_grid_function
+from pyfemsolver.visual.visual import show_boundary_function
 from pyfemsolver.solverlib.meshing import generate_mesh
 
 
@@ -40,7 +41,7 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     space = H1Space(mesh, order)
     u, mass, f_vector = solve_bvp(0, 1, space, u_bnd, f)
     ax, mini, maxi = show_grid_function(u, space, vrange=[0.0, 0.32], dx=0.2, dy=0.2)
-    show_boundary_function(g, mesh, ax)
+    show_boundary_function(u_bnd, mesh, ax)
     print(mini, maxi)
     ax.set_zlim([-5.0, 5.0])
     plt.show()
