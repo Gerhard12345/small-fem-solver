@@ -15,7 +15,6 @@ def jacobi_polynomial(n, x, alpha):
         vals[j + 1, :] = a_1 * (a_2 * x + alpha**2) * vals[j, :] - a_3 * vals[j - 1, :]
     return vals
 
-
 def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
@@ -32,16 +31,13 @@ def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
         vals[j, :] = a_1 * jacobi_poly_vals[j, :] + a_2 * jacobi_poly_vals[j - 1, :] - a_3 * jacobi_poly_vals[j - 2, :]
     return vals
 
-
 def barycentric_coordinates(x, y):
     # barycentric coordinates, corner sorting: (-1,-1),(1,-1),(0,1)
     return 1 / 4 * np.array([1 - 2 * x - y, 1 + 2 * x - y, 2 + 2 * y])
 
-
 def barycentric_coordinates_line(t):
     # barycentric coordinates, corner sorting: (-1,0),(1,0)
     return 1 / 2 * np.array([1 - t, 1 + t])
-
 
 def g(p, E, x, y):
     e_1 = E[0]
@@ -56,7 +52,6 @@ def g(p, E, x, y):
     vals_2 = np.array([l1**j for j in range(2, p + 1)])
     return vals_1 * vals_2
 
-
 def h(p, x, y):
     l = barycentric_coordinates(x, y)
     l1 = 2 * l[2] - 1
@@ -67,15 +62,13 @@ def h(p, x, y):
 
     return vals_1
 
-
 def duffy(zeta, eta) -> Tuple[NDArray, NDArray]:
     return 0.5 * zeta * (1 - eta), eta
-
 
 class H1Fel:
     def __init__(self, order: int):
         self.p = order
-        self.edges = [[0, 1], [1, 2], [2, 0]]
+        self.edges = [(0, 1), (1, 2), (2, 0)]
         self.flipped_edge = [False, False, False]
         self.ndof_vertex = 3
         self.ndof_faces = 3 * (self.p - 1)
@@ -84,28 +77,28 @@ class H1Fel:
         self.ndof = self.ndof_vertex + self.ndof_faces + self.ndof_inner
 
     def flip_edge(self, i: int) -> None:
-        self.flipped_edge[i] = True
+        self.edges[i] = tuple(reversed(self.edges[i]))
 
     def shape_functions(self, x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
-        Z = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), *x.shape))
-        Z[:3, :] = barycentric_coordinates(x, y)
+        shape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), *x.shape))
+        # Vertex functions
+        shape[:3, :] = barycentric_coordinates(x, y)
         if self.p == 1:
-            return Z
+            return shape
+        # Edge functions
         for i in range(3):
-            temp_edge = copy(self.edges[i])
-            if self.flipped_edge[i]:
-                temp_edge.reverse()
-            Z[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :] = g(self.p, temp_edge, x, y)
+            shape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :] = g(self.p, self.edges[i], x, y)
         if self.p < 3:
-            return Z
-        ts = h(self.p, x, y)
+            return shape
+        hs = h(self.p, x, y)
         i0 = 3 * self.p
         d0 = self.p - 2
+        # Bubble functions
         for i in range(2, self.p):
-            Z[i0 : i0 + d0, :] = Z[3 + i - 2] * ts[i - 2]
+            shape[i0 : i0 + d0, :] = shape[3 + i - 2] * hs[i - 2]
             i0 = i0 + d0
             d0 -= 1
-        return Z
+        return shape
 
     def dshape_functions(self, x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
         nip = x.size
@@ -116,14 +109,11 @@ class H1Fel:
         if self.p == 1:
             return Z
         for i in range(3):
-            temp_edge = copy(self.edges[i])
-            if self.flipped_edge[i]:
-                temp_edge.reverse()
             Z[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :nip] = (
-                1 / (2 * delta) * (g(self.p, temp_edge, x + delta, y) - g(self.p, temp_edge, x - delta, y))
+                1 / (2 * delta) * (g(self.p, self.edges[i], x + delta, y) - g(self.p, self.edges[i], x - delta, y))
             )
             Z[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), nip:] = (
-                1 / (2 * delta) * (g(self.p, temp_edge, x, y + delta) - g(self.p, temp_edge, x, y - delta))
+                1 / (2 * delta) * (g(self.p, self.edges[i], x, y + delta) - g(self.p, self.edges[i], x, y - delta))
             )
         if self.p < 3:
             return Z
@@ -251,7 +241,6 @@ class H1Fel:
         element_vector = (shape * omega) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
-
 
 def print_matrix(temp):
     print(np.array2string(temp).replace("\n", "").replace("]", "]\n"))

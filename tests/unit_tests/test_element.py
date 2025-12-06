@@ -17,3 +17,11 @@ class TestElement:
         assert fel.ndof_inner == int((p - 1) * (p - 2) / 2)
         assert fel.ndof == 3 * p + int((p - 2) * (p - 1) / 2)
 
+    def test_flip_edge(self):
+        p = 2
+        fel = H1Fel(order=p)
+        for edge_nr in (0, 1, 2):
+            original_edge = fel.edges[edge_nr]
+            fel.flip_edge(edge_nr)
+            flipped_edge = fel.edges[edge_nr]
+            assert flipped_edge == tuple(reversed(original_edge))
