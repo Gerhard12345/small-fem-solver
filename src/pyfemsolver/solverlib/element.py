@@ -15,6 +15,7 @@ def jacobi_polynomial(n, x, alpha):
         vals[j + 1, :] = a_1 * (a_2 * x + alpha**2) * vals[j, :] - a_3 * vals[j - 1, :]
     return vals
 
+
 def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
@@ -31,13 +32,16 @@ def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
         vals[j, :] = a_1 * jacobi_poly_vals[j, :] + a_2 * jacobi_poly_vals[j - 1, :] - a_3 * jacobi_poly_vals[j - 2, :]
     return vals
 
+
 def barycentric_coordinates(x, y):
     # barycentric coordinates, corner sorting: (-1,-1),(1,-1),(0,1)
     return 1 / 4 * np.array([1 - 2 * x - y, 1 + 2 * x - y, 2 + 2 * y])
 
+
 def barycentric_coordinates_line(t):
     # barycentric coordinates, corner sorting: (-1,0),(1,0)
     return 1 / 2 * np.array([1 - t, 1 + t])
+
 
 def g(p, E, x, y):
     e_1 = E[0]
@@ -52,6 +56,7 @@ def g(p, E, x, y):
     vals_2 = np.array([l1**j for j in range(2, p + 1)])
     return vals_1 * vals_2
 
+
 def h(p, x, y):
     l = barycentric_coordinates(x, y)
     l1 = 2 * l[2] - 1
@@ -62,8 +67,10 @@ def h(p, x, y):
 
     return vals_1
 
+
 def duffy(zeta, eta) -> Tuple[NDArray, NDArray]:
     return 0.5 * zeta * (1 - eta), eta
+
 
 class H1Fel:
     def __init__(self, order: int):
@@ -241,6 +248,7 @@ class H1Fel:
         element_vector = (shape * omega) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
+
 
 def print_matrix(temp):
     print(np.array2string(temp).replace("\n", "").replace("]", "]\n"))
