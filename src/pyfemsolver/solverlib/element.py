@@ -1,10 +1,10 @@
 import numpy as np
 from numpy.typing import NDArray
 from copy import copy
-from typing import Tuple
+from typing import Tuple, List, Callable
 
 
-def jacobi_polynomial(n, x, alpha):
+def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int):
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
     vals[1, :] = 0.5 * (alpha + (alpha + 2) * x)
@@ -16,7 +16,7 @@ def jacobi_polynomial(n, x, alpha):
     return vals
 
 
-def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
+def integrated_jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
     if n == 0:
@@ -33,17 +33,17 @@ def integrated_jacobi_polynomial(n: int, x: float | int, alpha: float | int):
     return vals
 
 
-def barycentric_coordinates(x, y):
+def barycentric_coordinates(x: NDArray[np.float64], y: NDArray[np.float64]):
     # barycentric coordinates, corner sorting: (-1,-1),(1,-1),(0,1)
     return 1 / 4 * np.array([1 - 2 * x - y, 1 + 2 * x - y, 2 + 2 * y])
 
 
-def barycentric_coordinates_line(t):
+def barycentric_coordinates_line(t: NDArray[np.float64]):
     # barycentric coordinates, corner sorting: (-1,0),(1,0)
     return 1 / 2 * np.array([1 - t, 1 + t])
 
 
-def g(p, E, x, y):
+def g(p: int, E: Tuple[int, int], x: NDArray[np.float64], y: NDArray[np.float64]):
     e_1 = E[0]
     e_2 = E[1]
     l = barycentric_coordinates(x, y)
@@ -57,10 +57,10 @@ def g(p, E, x, y):
     return vals_1 * vals_2
 
 
-def h(p, x, y):
+def h(p: int, x: NDArray[np.float64], y: NDArray[np.float64]) -> List[NDArray[np.float64]]:
     l = barycentric_coordinates(x, y)
     l1 = 2 * l[2] - 1
-    vals_1 = []
+    vals_1: List[NDArray[np.float64]] = []
     for i in range(2, p):
         s = integrated_jacobi_polynomial(p - i, l1, 2 * i - 1)[1:, :]
         vals_1.append(s)
@@ -68,7 +68,7 @@ def h(p, x, y):
     return vals_1
 
 
-def duffy(zeta, eta) -> Tuple[NDArray, NDArray]:
+def duffy(zeta: NDArray[np.float64], eta: NDArray[np.float64]) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
     return 0.5 * zeta * (1 - eta), eta
 
 
@@ -84,7 +84,7 @@ class H1Fel:
         self.ndof = self.ndof_vertex + self.ndof_faces + self.ndof_inner
 
     def flip_edge(self, i: int) -> None:
-        self.edges[i] = tuple(reversed(self.edges[i]))
+        self.edges[i] = (self.edges[i][1], self.edges[i][0])
 
     def shape_functions(self, x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
         shape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), *x.shape))
@@ -131,13 +131,10 @@ class H1Fel:
 
         i0 = 3 * self.p
         d0 = self.p - 2
-        temp_edge = copy(self.edges[0])
-        if self.flipped_edge[0]:
-            temp_edge.reverse()
-        gp = g(self.p, temp_edge, x + delta, y)
-        gm = g(self.p, temp_edge, x - delta, y)
-        gpy = g(self.p, temp_edge, x, y + delta)
-        gmy = g(self.p, temp_edge, x, y - delta)
+        gp = g(self.p, self.edges[0], x + delta, y)
+        gm = g(self.p, self.edges[0], x - delta, y)
+        gpy = g(self.p, self.edges[0], x, y + delta)
+        gmy = g(self.p, self.edges[0], x, y - delta)
 
         for i in range(2, self.p):
             Z[i0 : i0 + d0, :nip] = (gp[i - 2] * tsp[i - 2] - gm[i - 2] * tsm[i - 2]) / (2 * delta)
@@ -153,13 +150,13 @@ class H1Fel:
         Z[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
         return Z
 
-    def get_integration_rule_trig(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.float64]]:
+    def get_integration_rule_trig(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]:
         nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
         X, Y = np.meshgrid(nodes, nodes)
         X_t, Y_t = duffy(X, Y)
         X_t = X_t.flatten()
         Y_t = Y_t.flatten()
-        omega = np.outer(weights * 1 / 2 * (1 - nodes), weights).flatten()
+        omega = np.outer(weights * 1.0 / 2.0 * (1.0 - nodes), weights).flatten()
         return X_t, Y_t, omega
 
     def get_integration_rule_line(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
@@ -180,7 +177,7 @@ class H1Fel:
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
-    def calc_gradu_gradv_matrix(self, points):
+    def calc_gradu_gradv_matrix(self, points: NDArray[np.float64]):
         J = np.matrix(
             [
                 0.5 * (points[1, :] - points[0, :]),
@@ -205,7 +202,7 @@ class H1Fel:
         gradu_gradv[np.abs(gradu_gradv) < 1e-16] = 0
         return gradu_gradv
 
-    def calc_element_vector(self, points, f):
+    def calc_element_vector(self, points: NDArray[np.float64], f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]):
         J = np.matrix(
             [
                 0.5 * (points[1, :] - points[0, :]),
@@ -226,7 +223,7 @@ class H1Fel:
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
 
-    def calc_edge_mass_matrix(self, points):
+    def calc_edge_mass_matrix(self, points: NDArray[np.float64]):
         J = 0.5 * np.linalg.norm(points[1, :] - points[0, :])
         X, omega = self.get_integration_rule_line(self.p)
         omega *= abs(J)
@@ -235,7 +232,9 @@ class H1Fel:
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
-    def calc_edge_element_vector(self, points, f):
+    def calc_edge_element_vector(
+        self, points: NDArray[np.float64], f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+    ):
         J = 0.5 * np.linalg.norm(points[1, :] - points[0, :])
         X, omega = self.get_integration_rule_line(self.p)
         X.shape = (X.shape[0], 1)
@@ -250,5 +249,5 @@ class H1Fel:
         return element_vector
 
 
-def print_matrix(temp):
+def print_matrix(temp: NDArray[np.float64]):
     print(np.array2string(temp).replace("\n", "").replace("]", "]\n"))
