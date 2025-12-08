@@ -9,7 +9,7 @@ from pyfemsolver.solverlib.meshing import generate_mesh
 
 def f(x, y):
     # return np.ones(x.shape)
-    return np.sin(0.25 * np.pi * x) * np.sin(0.5 * np.pi * y)
+    return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
 def u_bnd(x, y):
@@ -17,9 +17,10 @@ def u_bnd(x, y):
 
 
 orders = [1, 4]
-edge_mesh_sizes = [0.1, 0.25]
-domain_mesh_sizes = [[0.1, 0.2], [0.25, 0.5]]
-for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, domain_mesh_sizes):
+edge_mesh_sizes = [0.25, 1.25]
+domain_mesh_sizes = [[0.25, 0.25], [0.5, 1.0]]
+plot_spacings = [0.25, 0.075]
+for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_mesh_sizes, domain_mesh_sizes, plot_spacings):
     data = {
         "lines": [
             # Region 1's outer boundary
@@ -40,7 +41,7 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
 
     space = H1Space(mesh, order)
     u, mass, f_vector = solve_bvp(0, 1, space, u_bnd, f)
-    ax, mini, maxi = show_grid_function(u, space, vrange=[0.0, 0.32], dx=0.2, dy=0.2)
+    ax, mini, maxi = show_grid_function(u, space, vrange=[-0.035, 0.035], dx=plot_spacing, dy=plot_spacing)
     show_boundary_function(u_bnd, mesh, ax)
     print(mini, maxi)
     ax.set_zlim([-5.0, 5.0])

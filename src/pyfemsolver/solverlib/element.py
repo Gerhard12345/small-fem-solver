@@ -3,6 +3,7 @@ derivatives, mass matrix, stiffness matrix, and element vectors.
 The basis functions are constructed using integrated Jacobi polynomials as described in:
 https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
 """
+
 import numpy as np
 from numpy.typing import NDArray
 from copy import copy
@@ -12,7 +13,7 @@ from typing import Tuple, List, Callable, Any
 def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     """
     Evaluate Jacobi polynomials of order n at points x with parameter alpha.
-    
+
     :param n: Order of the Jacobi polynomial
     :type n: int
     :param x: Evaluation points
@@ -36,7 +37,7 @@ def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDA
 def integrated_jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     """
     Evaluate integrated Jacobi polynomials of order n at points x with parameter alpha.
-    
+
     :param n: Order of the Jacobi polynomial
     :type n: int
     :param x: Evaluation points
