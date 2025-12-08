@@ -6,10 +6,22 @@ https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
 import numpy as np
 from numpy.typing import NDArray
 from copy import copy
-from typing import Tuple, List, Callable
+from typing import Tuple, List, Callable, Any
 
 
-def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int):
+def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
+    """
+    Evaluate Jacobi polynomials of order n at points x with parameter alpha.
+    
+    :param n: Order of the Jacobi polynomial
+    :type n: int
+    :param x: Evaluation points
+    :type x: NDArray[np.float64]
+    :param alpha: The alpha parameter of the Jacobi polynomial
+    :type alpha: float | int
+    :return: The first n Jacobi polynomials evaluated at x
+    :rtype: NDArray[float64]
+    """
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
     vals[1, :] = 0.5 * (alpha + (alpha + 2) * x)
@@ -22,6 +34,18 @@ def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int):
 
 
 def integrated_jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
+    """
+    Evaluate integrated Jacobi polynomials of order n at points x with parameter alpha.
+    
+    :param n: Order of the Jacobi polynomial
+    :type n: int
+    :param x: Evaluation points
+    :type x: NDArray[np.float64]
+    :param alpha: The alpha parameter of the Jacobi polynomial
+    :type alpha: float | int
+    :return: The first n Jacobi polynomials evaluated at x
+    :rtype: NDArray[float64]
+    """
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
     if n == 0:
