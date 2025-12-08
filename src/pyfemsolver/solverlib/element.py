@@ -1,3 +1,8 @@
+"""The file provides a H! Finite element and associated methods for shape functions,
+derivatives, mass matrix, stiffness matrix, and element vectors.
+The basis functions are constructed using integrated Jacobi polynomials as described in:
+https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
+"""
 import numpy as np
 from numpy.typing import NDArray
 from copy import copy
