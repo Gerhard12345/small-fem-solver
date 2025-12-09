@@ -62,7 +62,7 @@ good-names = ["X",
               "Y",
               "X_t",
               "Y_t",
-              "E"
+              "E",
               "XY_phys",
               "J",
               "Jinv",

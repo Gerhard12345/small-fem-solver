@@ -1,12 +1,36 @@
+from typing import Tuple, Callable
+
 import numpy as np
+from numpy.typing import NDArray
 import matplotlib.pyplot as plt
-from pyfemsolver.solverlib.meshing import Triangulation
-from pyfemsolver.solverlib.integrationrules import duffy
-from pyfemsolver.solverlib.element import barycentric_coordinates, barycentric_coordinates_line
-from pyfemsolver.solverlib.space import H1Space
+from mpl_toolkits.mplot3d import Axes3D
+
+from ..solverlib.meshing import Triangulation
+from ..solverlib.integrationrules import duffy
+from ..solverlib.element import barycentric_coordinates, barycentric_coordinates_line
+from ..solverlib.space import H1Space
+from ..solverlib.elementtransformation import ElementTransformationTrig
 
 
-def show_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
+def show_grid_function(
+    u: NDArray[np.floating], space: H1Space, vrange: Tuple[float, float], dx: float = 0.01, dy: float = 0.01
+) -> Tuple[Axes3D, float, float]:
+    """
+    Display a grid function as a 3D surface plot.
+
+    :param u: Coefficient vector for the grid function
+    :type u: NDArray[np.floating]
+    :param space: H1 space instance
+    :type space: H1Space
+    :param vrange: (min_value, max_value) for color scaling
+    :type vrange: Tuple[float, float]
+    :param dx: Grid spacing in x-direction (default 0.01)
+    :type dx: float
+    :param dy: Grid spacing in y-direction (default 0.01)
+    :type dy: float
+    :return: Tuple of Axes object minimum value, maximum value
+    :rtype: Tuple[plt.Axes, float, float]
+    """
     fig = plt.figure()
     ax = fig.add_subplot(1, 1, 1, projection="3d")
     trigs = [trig.points for trig in space.tri.trigs]
@@ -46,16 +70,43 @@ def show_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
     return ax, min_val, max_val
 
 
-def show_shape(dof, space: H1Space, vrange=[0, 2], dx=0.3, dy=0.3):
+def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], dx: float = 0.3, dy: float = 0.3) -> Tuple[Axes3D, float, float]:
+    """
+    Display the shape function corresponding to a given degree of freedom number.
+
+    :param dof_number: Degree of freedom number
+    :type dof_number: int
+    :param space: H1 space instance
+    :type space: H1Space
+    :param vrange: (min_value, max_value) for color scaling
+    :type vrange: Tuple[float, float]
+    :param dx: Grid spacing in x-direction (default 0.3)
+    :type dx: float
+    :param dy: Grid spacing in y-direction (default 0.3)
+    :type dy: float
+    :return: Tuple of Axes object, minimum value, maximum value
+    """
     u = np.zeros((space.ndof, 1))
-    u[dof, 0] = 1
+    u[dof_number, 0] = 1
     ax, mini, maxi = show_grid_function(u, space, vrange, dx, dy)
     print(f"Minimum value of shape function = {mini}, maximum value of shape function = {maxi}")
-    ax.set_title(f"dof = {dof}")
+    ax.set_title(f"dof number = {dof_number}")
     return ax, mini, maxi
 
 
-def show_edge_shape(trig_nr: int, space: H1Space, ax: plt.Axes = None):
+def show_edge_shape(trig_number: int, space: H1Space, ax: Axes3D | None = None):
+    """
+    Display the edge shape functions of a given triangle element.
+
+    :param trig_number: Triangle element number
+    :type trig_number: int
+    :param space: H1 space instance
+    :type space: H1Space
+    :param ax: Optional Axes3D object to plot on. If None, a
+                new figure with subplots will be created.
+    :type ax: plt.Axes | None
+    :return: None
+    """
     t = np.arange(-1, 1.025, 0.025)
     t.shape = (t.shape[0], 1)
     x, y = barycentric_coordinates_line(t)
@@ -63,11 +114,11 @@ def show_edge_shape(trig_nr: int, space: H1Space, ax: plt.Axes = None):
     if not ax:
         use_new_axes = True
         fig = plt.figure()
-    trig = space.tri.trigs[trig_nr]
+    trig = space.tri.trigs[trig_number]
     for i, edge_nr in enumerate(trig.edges):
         if use_new_axes:
             ax = fig.add_subplot(1, 3, i + 1, projection="3d")
-        shape = space.elements[trig_nr].edge_shape_functions(t.flatten())
+        shape = space.elements[trig_number].edge_shape_functions(t.flatten())
         edge = space.tri.edges[edge_nr]
         edge.points
         xy = space.tri.points[edge.points[0]].coordinates * x + space.tri.points[edge.points[1]].coordinates * y
@@ -80,7 +131,7 @@ def show_edge_shape(trig_nr: int, space: H1Space, ax: plt.Axes = None):
         ax.plot(x_coords, y_coords, "o")
 
 
-def show_boundary_function(g, tri: Triangulation, ax: plt.Axes):
+def show_boundary_function(g: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]], tri: Triangulation, ax: Axes3D):
     t = np.arange(-1, 1.025, 0.025)
     t.shape = (t.shape[0], 1)
     x, y = barycentric_coordinates_line(t)
@@ -93,7 +144,7 @@ def show_boundary_function(g, tri: Triangulation, ax: plt.Axes):
         ax.plot(xy[:, 0], xy[:, 1], vals, linewidth=7)
 
 
-def show_gradient_of_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
+def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vrange: Tuple[int, int], dx: float = 0.01, dy: float = 0.01):
     """Display x and y components of the gradient of a grid function as surfaces.
 
     Creates a figure with two 3D surface plots side-by-side:
@@ -101,13 +152,20 @@ def show_gradient_of_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
     2) Right plot: y-component of the gradient
 
     :param u: Coefficient vector for the grid function
+    :type u: NDArray[np.floating]
     :param space: H1 space instance
+    :type space: H1Space
     :param vrange: [min_value, max_value] for color scaling
+    :type vrange: Tuple[int, int]
     :param dx: Grid spacing in x-direction (default 0.01)
+    :type dx: float
     :param dy: Grid spacing in y-direction (default 0.01)
+    :type dy: float
     :return: Tuple of (ax_dx, ax_dy, min_val, max_val) where ax_dx and ax_dy are the axes
+                for the x and y gradient components, and min_val and max_val are the
+                minimum and maximum gradient values across both components.
+    :rtype: Tuple[Axes3D, Axes3D, float, float]
     """
-    from pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig
 
     fig = plt.figure(figsize=(14, 6))
     ax_dx = fig.add_subplot(1, 2, 1, projection="3d")

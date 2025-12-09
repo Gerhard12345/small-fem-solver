@@ -1,4 +1,5 @@
-"""Integration rules for triangular and line elements with caching.
+"""
+Integration rules for triangular and line elements with caching.
 
 This module provides classes to compute and cache Gauss-Legendre integration rules
 for triangular and line elements using Duffy transformation for triangles.

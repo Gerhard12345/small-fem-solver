@@ -19,7 +19,7 @@ class Triangle:
 
 @dataclass
 class Edge:
-    points: Tuple[int]
+    points: Tuple[int, int]
     neighbouring_elements: List[int]
     is_boundary_edge: bool
     global_edge_nr: int
