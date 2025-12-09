@@ -1,3 +1,5 @@
+"""Example solving for the electrostatic potential with two embedded charged plates."""
+
 from typing import List
 
 import matplotlib.pyplot as plt
@@ -10,8 +12,8 @@ from ..visual.visual import show_grid_function, show_gradient_of_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 
-height = 0.6
-width = 2.4
+height = 0.6  # pylint:disable=C0103
+width = 2.4  # pylint:disable=C0103
 center_x = [0, 0]
 center_y = [-2, 2]
 
@@ -108,7 +110,7 @@ mesh = generate_mesh(geometry, max_gradient=0.4)
 space = H1Space(mesh, 9)
 
 
-def u_bound(x: NDArray[np.floating] | np.floating, y: NDArray[np.floating] | np.floating) -> NDArray[np.floating]:
+def u_bound(x: NDArray[np.floating] | np.floating, y: NDArray[np.floating] | np.floating) -> NDArray[np.floating]:  # pylint:disable=C0116
     safety = 0.01
     if isinstance(x, np.floating):
         x = np.array([x])

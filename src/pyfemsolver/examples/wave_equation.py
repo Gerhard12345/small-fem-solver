@@ -1,3 +1,5 @@
+"""Demonstrates the ability to solve wave equations"""
+
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
@@ -8,8 +10,8 @@ from ..visual.visual import show_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 
-height = 0.6
-width = 2.4
+height = 0.6  # pylint:disable=C0103
+width = 2.4  # pylint:disable=C0103
 center_x = [0, 0]
 center_y = [-2, 2]
 lines: List[Line] = []

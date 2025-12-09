@@ -1,3 +1,5 @@
+"""Example solving Laplacian BVP with inhomogeneous boundary conditions."""
+
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,11 +12,11 @@ from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 
 
-def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
+def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     return (x - 0.5) ** 3 + (y - 0.5) ** 3
 
 
-def f(x: NDArray[np.floating], _: NDArray[np.floating]) -> NDArray[np.floating]:
+def f(x: NDArray[np.floating], _: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     return np.zeros(x.shape)
 
 

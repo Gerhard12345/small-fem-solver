@@ -1,3 +1,5 @@
+"""Visualization of shape functions on a mesh."""
+
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np

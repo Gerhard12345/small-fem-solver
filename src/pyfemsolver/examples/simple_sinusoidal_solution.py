@@ -1,3 +1,5 @@
+"""Example solving Laplacian BVP with sinusoidal source term and homogeneous boundary conditions. Can be used to compute an approximation error."""
+
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
@@ -10,12 +12,12 @@ from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 
 
-def f(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
+def f(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     # return np.ones(x.shape)
     return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
-def u_bnd(x: NDArray[np.floating], _: NDArray[np.floating]) -> NDArray[np.floating]:
+def u_bnd(x: NDArray[np.floating], _: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     return np.zeros(x.shape)
 
 

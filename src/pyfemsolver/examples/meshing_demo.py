@@ -1,3 +1,5 @@
+"""Example visualizing different steps in meshing algorithm"""
+
 from typing import List, Tuple
 
 import matplotlib.pyplot as plt
