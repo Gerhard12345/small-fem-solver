@@ -13,10 +13,10 @@ from src.pyfemsolver.solverlib.elementtransformation import ElementTransformatio
 
 class TestElement:
     def setup_method(self):
-        print("Setup")
+        """Called before every test method."""
 
     def teardown_method(self):
-        print("Teardown")
+        """Called after every test method."""
 
     def test_constructor(self):
         """Given: an order p=3 element
@@ -158,8 +158,8 @@ class TestElement:
         fel = H1Fel(order=2)
         points = np.array([[-1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
         eltrans = ElementTransformationTrig(points)
-        f_const = lambda x, y: np.ones_like(x)
-        elem_vec = fel.calc_element_vector(eltrans, f_const)
+        f_const = lambda x, y: np.ones_like(x)  # type: ignore
+        elem_vec = fel.calc_element_vector(eltrans, f_const)  # type: ignore
         for i in range(3):
             assert np.allclose(elem_vec[i].sum(), 1.0 / 3.0, atol=1e-6)
         for i in range(3, 6):
