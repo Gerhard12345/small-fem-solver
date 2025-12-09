@@ -19,8 +19,8 @@ class Point:
 
 @dataclass
 class Triangle:
-    points: Tuple[int]
-    edges: Tuple[int]
+    points: Tuple[int, int, int]
+    edges: Tuple[int, int, int]
 
 
 @dataclass
