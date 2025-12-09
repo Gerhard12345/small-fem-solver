@@ -1,11 +1,13 @@
+from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
-from pyfemsolver.solverlib.space import H1Space
-from pyfemsolver.solverlib.solving import solve_bvp
-from pyfemsolver.visual.visual import show_grid_function
-from pyfemsolver.visual.visual import show_boundary_function
-from pyfemsolver.solverlib.meshing import generate_mesh
+from ..solverlib.space import H1Space
+from ..solverlib.solving import solve_bvp
+from ..visual.visual import show_grid_function
+from ..visual.visual import show_boundary_function
+from ..solverlib.meshing import generate_mesh
+from ..solverlib.geometry import Line, Region, Geometry
 
 
 def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
@@ -20,22 +22,16 @@ orders = [1, 4]
 edge_mesh_sizes = [0.4, 0.5]
 domain_mesh_sizes = [0.4, 0.5]
 for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, domain_mesh_sizes):
-    data = {
-        "lines": [
-            # Region 1's outer boundary
-            {"start": [-1, -1], "end": [1, -1], "left_region": 1, "right_region": 0, "h": edge_mesh_size, "boundary_index": 1},
-            {"start": [1, -1], "end": [1, 1], "left_region": 1, "right_region": 0, "h": edge_mesh_size, "boundary_index": 1},
-            {"start": [1, 1], "end": [-1, 1], "left_region": 1, "right_region": 0, "h": edge_mesh_size, "boundary_index": 1},
-            {"start": [-1, 1], "end": [-1, -1], "left_region": 1, "right_region": 0, "h": edge_mesh_size, "boundary_index": 2},
-        ],
-        "regions": [
-            {"region_id": 1, "mesh_inner": domain_mesh_size},
-        ],
-    }
+    lines: List[Line] = []
+    lines.append(Line(start=(-1, -1), end=(1, -1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
+    lines.append(Line(start=(1, -1), end=(1, 1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
+    lines.append(Line(start=(1, 1), end=(-1, 1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
+    lines.append(Line(start=(-1, 1), end=(-1, -1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=2))
+    regions: List[Region] = []
+    regions.append(Region(region_id=1, mesh_inner=domain_mesh_size))
+    geometry = Geometry(lines=lines, regions=regions)
 
-    max_gradient = 0.07
-    mesh = generate_mesh(data, max_gradient)
-
+    mesh = generate_mesh(geometry, max_gradient=0.07)
     space = H1Space(mesh, order)
 
     u, mass2, f_vector2 = solve_bvp(0, 1, space, u_bnd, f)

@@ -1,3 +1,5 @@
+from typing import List
+
 import matplotlib.pyplot as plt
 import numpy as np
 from numpy.typing import NDArray
@@ -6,94 +8,103 @@ from ..solverlib.space import H1Space
 from ..solverlib.solving import solve_bvp
 from ..visual.visual import show_grid_function, show_gradient_of_grid_function
 from ..solverlib.meshing import generate_mesh
-
+from ..solverlib.geometry import Line, Region, Geometry
 
 height = 0.6
 width = 2.4
 center_x = [0, 0]
 center_y = [-2, 2]
 
+lines: List[Line] = []
+lines.append(Line(start=(-6, -6), end=(6, -6), left_region=1, right_region=0, h=4, boundary_index=1))
+lines.append(Line(start=(6, -6), end=(6, 6), left_region=1, right_region=0, h=4, boundary_index=1))
+lines.append(Line(start=(6, 6), end=(-6, 6), left_region=1, right_region=0, h=4, boundary_index=1))
+lines.append(Line(start=(-6, 6), end=(-6, -6), left_region=1, right_region=0, h=4, boundary_index=1))
+lines.append(
+    Line(
+        start=(center_x[0] - width * 0.5, center_y[0] - height * 0.5),
+        end=(center_x[0] + width * 0.5, center_y[0] - height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[0] + width * 0.5, center_y[0] - height * 0.5),
+        end=(center_x[0] + width * 0.5, center_y[0] + height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[0] + width * 0.5, center_y[0] + height * 0.5),
+        end=(center_x[0] - width * 0.5, center_y[0] + height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[0] - width * 0.5, center_y[0] + height * 0.5),
+        end=(center_x[0] - width * 0.5, center_y[0] - height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[1] - width * 0.5, center_y[1] - height * 0.5),
+        end=(center_x[1] + width * 0.5, center_y[1] - height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[1] + width * 0.5, center_y[1] - height * 0.5),
+        end=(center_x[1] + width * 0.5, center_y[1] + height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[1] + width * 0.5, center_y[1] + height * 0.5),
+        end=(center_x[1] - width * 0.5, center_y[1] + height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+lines.append(
+    Line(
+        start=(center_x[1] - width * 0.5, center_y[1] + height * 0.5),
+        end=(center_x[1] - width * 0.5, center_y[1] - height * 0.5),
+        left_region=0,
+        right_region=1,
+        h=1,
+        boundary_index=3,
+    )
+)
+regions: List[Region] = []
+regions.append(Region(region_id=1, mesh_inner=4))
+geometry = Geometry(lines=lines, regions=regions)
 
-data = {
-    "lines": [
-        # Region 1's outer boundary
-        {"start": [-6, -6], "end": [6, -6], "left_region": 1, "right_region": 0, "h": 4, "boundary_index": 1},
-        {"start": [6, -6], "end": [6, 6], "left_region": 1, "right_region": 0, "h": 4, "boundary_index": 1},
-        {"start": [6, 6], "end": [-6, 6], "left_region": 1, "right_region": 0, "h": 4, "boundary_index": 1},
-        {"start": [-6, 6], "end": [-6, -6], "left_region": 1, "right_region": 0, "h": 4, "boundary_index": 1},
-        # plate 1
-        {
-            "start": [center_x[0] - width * 0.5, center_y[0] - height * 0.5],
-            "end": [center_x[0] + width * 0.5, center_y[0] - height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        {
-            "start": [center_x[0] + width * 0.5, center_y[0] - height * 0.5],
-            "end": [center_x[0] + width * 0.5, center_y[0] + height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        {
-            "start": [center_x[0] + width * 0.5, center_y[0] + height * 0.5],
-            "end": [center_x[0] - width * 0.5, center_y[0] + height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        {
-            "start": [center_x[0] - width * 0.5, center_y[0] + height * 0.5],
-            "end": [center_x[0] - width * 0.5, center_y[0] - height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        # plate 2
-        {
-            "start": [center_x[1] - width * 0.5, center_y[1] - height * 0.5],
-            "end": [center_x[1] + width * 0.5, center_y[1] - height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        {
-            "start": [center_x[1] + width * 0.5, center_y[1] - height * 0.5],
-            "end": [center_x[1] + width * 0.5, center_y[1] + height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        {
-            "start": [center_x[1] + width * 0.5, center_y[1] + height * 0.5],
-            "end": [center_x[1] - width * 0.5, center_y[1] + height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-        {
-            "start": [center_x[1] - width * 0.5, center_y[1] + height * 0.5],
-            "end": [center_x[1] - width * 0.5, center_y[1] - height * 0.5],
-            "left_region": 0,
-            "right_region": 1,
-            "h": 1,
-            "boundary_index": 3,
-        },
-    ],
-    "regions": [
-        {"region_id": 1, "mesh_inner": 4},
-    ],
-}
-
-mesh = generate_mesh(data, max_gradient=0.4)
+mesh = generate_mesh(geometry, max_gradient=0.4)
 space = H1Space(mesh, 9)
 
 
