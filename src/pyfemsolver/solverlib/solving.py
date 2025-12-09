@@ -1,7 +1,8 @@
+from typing import Callable
+
 import numpy as np
 from numpy.typing import NDArray
 from pyfemsolver.solverlib.space import H1Space
-from typing import Callable
 
 
 def set_boundary_values(space: H1Space, g: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]):

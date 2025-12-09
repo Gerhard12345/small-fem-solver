@@ -4,9 +4,10 @@ This module provides classes to compute and cache Gauss-Legendre integration rul
 for triangular and line elements using Duffy transformation for triangles.
 """
 
+from typing import Tuple, Dict
+
 import numpy as np
 from numpy.typing import NDArray
-from typing import Tuple, Dict
 
 
 def duffy(zeta: NDArray[np.floating], eta: NDArray[np.floating]) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
