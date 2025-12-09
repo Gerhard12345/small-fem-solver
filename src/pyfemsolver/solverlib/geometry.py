@@ -1,3 +1,7 @@
+"""
+Geometry module defining classes for 2D geometric entities used in meshing.
+"""
+
 from dataclasses import dataclass
 from typing import Tuple, List
 

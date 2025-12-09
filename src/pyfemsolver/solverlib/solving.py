@@ -1,3 +1,8 @@
+"""
+Finite element solver module. Provides functions to set boundary values,
+solve by static condensation, and solve boundary value problems using H1 finite element spaces.
+"""
+
 from typing import Callable
 
 import numpy as np

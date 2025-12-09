@@ -1,3 +1,5 @@
+""" "H1 Finite element space module. Defines the H1Space class for managing finite element spaces, dofs, and assembly."""
+
 from typing import List, Callable
 
 import numpy as np
@@ -9,6 +11,8 @@ from .meshing import Triangulation
 
 
 class H1Space:
+    """H1 Finite element space class. Manages elements, dofs, and assembly."""
+
     def __init__(self, tri: Triangulation, p: int):
         self.tri = tri
         self.p = p

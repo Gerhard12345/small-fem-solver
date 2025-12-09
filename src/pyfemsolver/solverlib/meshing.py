@@ -1,3 +1,7 @@
+"""
+Meshing module for generating and optimizing triangular meshes based on geometric definitions.
+"""
+
 from typing import Dict, List, Tuple
 from dataclasses import dataclass
 import numpy as np

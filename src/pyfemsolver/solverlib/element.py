@@ -1,4 +1,5 @@
-"""The file provides a H! Finite element and associated methods for shape functions,
+"""
+The file provides a H! Finite element and associated methods for shape functions,
 derivatives, mass matrix, stiffness matrix, and element vectors.
 The basis functions are constructed using integrated Jacobi polynomials as described in:
 https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
@@ -147,6 +148,11 @@ def h(p: int, x: NDArray[np.floating], y: NDArray[np.floating]) -> List[NDArray[
 
 
 class H1Fel:
+    """
+    H1 Finite element class. Provides methods for shape functions, derivatives,
+    mass matrix, stiffness matrix, and element vectors.
+    """
+
     # Class-level integration rule instances (shared across all instances)
     _integration_rule_trig = GetIntegrationRuleTrig()
     _integration_rule_line = GetIntegrationRuleLine()
