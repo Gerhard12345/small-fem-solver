@@ -1,3 +1,5 @@
+"""Simple visualization routines for grid functions and shape functions."""
+
 from typing import Tuple, Callable
 
 import numpy as np

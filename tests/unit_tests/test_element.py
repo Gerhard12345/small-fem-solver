@@ -1,3 +1,5 @@
+""" "Unit tests for H1 finite element class and related functions."""
+
 import numpy as np
 
 from src.pyfemsolver.solverlib.element import (
@@ -12,6 +14,8 @@ from src.pyfemsolver.solverlib.elementtransformation import ElementTransformatio
 
 
 class TestElement:
+    """Unit tests for H1 finite element class and related functions."""
+
     def setup_method(self):
         """Called before every test method."""
 
