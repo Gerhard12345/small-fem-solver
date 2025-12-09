@@ -1,40 +1,40 @@
 import numpy as np
 from scipy.spatial import Delaunay
-from typing import List, Tuple
+from typing import List, Tuple, Dict, Any
 from numpy.typing import NDArray
 from dataclasses import dataclass
 
 
 @dataclass
 class Point:
-    coordinates: NDArray[np.float64] = None
-    is_boundary_point: bool = None
+    coordinates: NDArray[np.float64]
+    is_boundary_point: bool
 
 
 @dataclass
 class Triangle:
-    points: List[int] = None
-    edges: List[int] = None
+    points: List[int]
+    edges: List[int]
 
 
 @dataclass
 class Edge:
-    points: Tuple[int] = None
-    neighbouring_elements: List[int] = None
-    is_boundary_edge: bool = None
-    global_edge_nr: int = None
+    points: Tuple[int]
+    neighbouring_elements: List[int]
+    is_boundary_edge: bool
+    global_edge_nr: int
 
 
 @dataclass
 class Triangulation:
-    points: List[Point] = None
-    boundary_points: List[Point] = None
-    edges: List[Edge] = None
-    trigs: List[Triangle] = None
-    boundary_edges: List[Edge] = None
+    points: List[Point]
+    boundary_points: List[Point]
+    edges: List[Edge]
+    trigs: List[Triangle]
+    boundary_edges: List[Edge]
 
 
-def generate_points_on_lines(lines, tolerance=1e-6):
+def generate_points_on_lines(lines, tolerance: float = 1e-6):
     points = []
     is_inner_point = []
     for line in lines:

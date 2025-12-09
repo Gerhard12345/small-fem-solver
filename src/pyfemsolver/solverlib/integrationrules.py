@@ -9,15 +9,15 @@ from numpy.typing import NDArray
 from typing import Tuple, Dict
 
 
-def duffy(zeta: NDArray[np.float64], eta: NDArray[np.float64]) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+def duffy(zeta: NDArray[np.floating], eta: NDArray[np.floating]) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
     """Apply Duffy transformation to map Gauss-Legendre quadrature to reference triangle.
 
     :param zeta: First coordinate in reference domain
-    :type zeta: NDArray[np.float64]
+    :type zeta: NDArray[np.floating]
     :param eta: Second coordinate in reference domain
-    :type eta: NDArray[np.float64]
+    :type eta: NDArray[np.floating]
     :return: Transformed coordinates (X_t, Y_t)
-    :rtype: Tuple[NDArray[np.float64], NDArray[np.float64]]
+    :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
     """
     return 0.5 * zeta * (1 - eta), eta
 
@@ -30,9 +30,9 @@ class GetIntegrationRuleTrig:
 
     def __init__(self):
         """Initialize the integration rule cache for triangles."""
-        self._cache: Dict[int, Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]] = {}
+        self._cache: Dict[int, Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]] = {}
 
-    def __call__(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]:
+    def __call__(self, p: int) -> Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
         """Get integration rule for triangles of order p.
 
         Computes the rule on first call and returns a copy of the cached result on subsequent calls.
@@ -41,7 +41,7 @@ class GetIntegrationRuleTrig:
         :param p: Order of the integration rule (number of Gauss points = 2p+1)
         :type p: int
         :return: Tuple of (X coordinates, Y coordinates, weights)
-        :rtype: Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]
+        :rtype: Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]
         """
         if p not in self._cache:
             self._cache[p] = self._compute_integration_rule_trig(p)
@@ -50,13 +50,13 @@ class GetIntegrationRuleTrig:
         return X.copy(), Y.copy(), omega.copy()
 
     @staticmethod
-    def _compute_integration_rule_trig(p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]:
+    def _compute_integration_rule_trig(p: int) -> Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
         """Compute integration rule for triangles using Duffy transformation.
 
         :param p: Order of the integration rule
         :type p: int
         :return: Tuple of (X coordinates, Y coordinates, weights)
-        :rtype: Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]
+        :rtype: Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]
         """
         nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
         X, Y = np.meshgrid(nodes, nodes)
@@ -75,9 +75,9 @@ class GetIntegrationRuleLine:
 
     def __init__(self):
         """Initialize the integration rule cache for lines."""
-        self._cache: Dict[int, Tuple[NDArray[np.float64], NDArray[np.float64]]] = {}
+        self._cache: Dict[int, Tuple[NDArray[np.floating], NDArray[np.floating]]] = {}
 
-    def __call__(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def __call__(self, p: int) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
         """Get integration rule for lines of order p.
 
         Computes the rule on first call and returns a copy of the cached result on subsequent calls.
@@ -86,7 +86,7 @@ class GetIntegrationRuleLine:
         :param p: Order of the integration rule (number of Gauss points = 2p+1)
         :type p: int
         :return: Tuple of (nodes, weights)
-        :rtype: Tuple[NDArray[np.float64], NDArray[np.float64]]
+        :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
         """
         if p not in self._cache:
             self._cache[p] = self._compute_integration_rule_line(p)
@@ -95,13 +95,13 @@ class GetIntegrationRuleLine:
         return nodes.copy(), weights.copy()
 
     @staticmethod
-    def _compute_integration_rule_line(p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
+    def _compute_integration_rule_line(p: int) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
         """Compute integration rule for lines using Gauss-Legendre quadrature.
 
         :param p: Order of the integration rule
         :type p: int
         :return: Tuple of (nodes, weights)
-        :rtype: Tuple[NDArray[np.float64], NDArray[np.float64]]
+        :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
         """
         nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
         return nodes, weights

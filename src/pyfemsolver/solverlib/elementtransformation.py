@@ -3,9 +3,9 @@ from numpy.typing import NDArray
 
 
 class ElementTransformation:
-    def __init__(self, points: NDArray):
+    def __init__(self, points: NDArray[np.floating]):
         self.points = points  # array of point coordinates
-        self.J: NDArray[np.float64] = None
+        self.J: NDArray[np.floating]
 
     def getjacobian(self):
         return self.J
@@ -20,7 +20,7 @@ class ElementTransformation:
 
 
 class ElementTransformationTrig(ElementTransformation):
-    def __init__(self, points: NDArray):
+    def __init__(self, points: NDArray[np.floating]):
         super().__init__(points)
         self.J = np.array(
             [
@@ -31,9 +31,9 @@ class ElementTransformationTrig(ElementTransformation):
 
 
 class ElementTransformationLine(ElementTransformation):
-    def __init__(self, points: NDArray):
+    def __init__(self, points: NDArray[np.float64]):
         super().__init__(points)
-        self.J = 0.5 * np.linalg.norm(points[1, :] - points[0, :])
+        self.J = np.array(np.linalg.norm(0.5 * points[1, :] - 0.5 * points[0, :]))
 
     def getjacobian_determinant(self):
         return np.abs(self.J)

@@ -1,16 +1,19 @@
+from typing import List, Callable
+
 import numpy as np
+from numpy.typing import NDArray
+
 from .element import H1Fel
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
-from typing import List
 from .meshing import Triangulation
 
 
 class H1Space:
-    def __init__(self, tri: Triangulation, p):
+    def __init__(self, tri: Triangulation, p: int):
         self.tri = tri
         self.p = p
         # For each triangle the list contains a Finite element:
-        self.elements: List[H1Fel] = [None] * len(tri.trigs)
+        self.elements: List[H1Fel] = [H1Fel(order=p) for _ in range(len(tri.trigs))]
         # The number of vertex dofs is equal to the number of vertices in the triangulation
         self.ndof_vertex = len(tri.points)
         # For each edge there are p-1 edge basis functions, thus the number of edge/face dofs is
@@ -29,7 +32,7 @@ class H1Space:
                 if trigpoints[edge[0]] > trigpoints[edge[1]]:
                     self.elements[i].flip_edge(j)
 
-        dofs = [[] for _ in range(len(tri.trigs))]
+        dofs: List[List[int]] = [[] for _ in range(len(tri.trigs))]
         for i, trig in enumerate(tri.trigs):
             trigpoints = trig.points
             # For each triangle the first dofs are the vertex dofs. "Hat functions"
@@ -50,7 +53,7 @@ class H1Space:
                 [self.ndof_vertex + self.ndof_faces + i * self.elements[i].ndof_inner + j for j in range(self.elements[i].ndof_inner)]
             )
 
-        boundary_dofs = [[]] * len(self.tri.boundary_edges)
+        boundary_dofs: List[List[int]] = [[]] * len(self.tri.boundary_edges)
         for i, edge in enumerate(tri.boundary_edges):
             neighbour = edge.neighbouring_elements[0]
             boundary_dofs[i] = list(edge.points)
@@ -66,23 +69,74 @@ class H1Space:
         self.unique_boundary_dofs = sorted(list(set([dof for dofs in self.boundary_dofs for dof in dofs])))
         self.inner_dofs = [i for i in range(self.ndof) if i not in self.unique_boundary_dofs]
 
-    def local_to_global(self, element_matrix, global_matrix, trig_index: int):
-        """Map the local element matrix to the global one."""
+    def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: NDArray[np.floating], trig_index: int):
+        """
+        Map the local element dofs to the global ones for matrices.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_matrix: The local element matrix to be mapped
+        :type element_matrix: NDArray[np.floating]
+        :param global_matrix: The global matrix to which the local matrix is mapped
+        :type global_matrix: NDArray[np.floating]
+        :return: None
+        """
         dx, dy = np.meshgrid(self.dofs[trig_index], self.dofs[trig_index])
         global_matrix[dy, dx] += element_matrix
 
-    def local_to_global_boundary(self, element_matrix, global_matrix, edge_index):
-        """Map the local boundary element matrix to the global one."""
+    def local_to_global_boundary(self, element_matrix: NDArray[np.floating], global_matrix: NDArray[np.floating], edge_index: int):
+        """
+        Map the local boundary dofs to the global ones for matrices.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_matrix: The local element matrix to be mapped
+        :type element_matrix: NDArray[np.floating]
+        :param global_matrix: The global matrix to which the local matrix is mapped
+        :type global_matrix: NDArray[np.floating]
+        :return: None
+        """
         dx, dy = np.meshgrid(self.boundary_dofs[edge_index], self.boundary_dofs[edge_index])
         global_matrix[dy, dx] += element_matrix
 
-    def local_to_global_vector(self, element_vector, global_vector, trig_index):
+    def local_to_global_vector(self, element_vector: NDArray[np.floating], global_vector: NDArray[np.floating], trig_index: int):
+        """
+        Map the local element dofs to the global ones.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_vector: The local element vector to be mapped
+        :type element_vector: NDArray[np.floating]
+        :param global_vector: The global vector to which the local vector is mapped
+        :type global_vector: NDArray[np.floating]
+        :return: None
+        """
         global_vector[self.dofs[trig_index]] += element_vector
 
-    def local_to_global_boundary_vector(self, element_vector, global_vector, edge_index):
+    def local_to_global_boundary_vector(self, element_vector: NDArray[np.floating], global_vector: NDArray[np.floating], edge_index: int):
+        """
+        Map the local boundary dofs to the global ones.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_vector: The local element vector to be mapped
+        :type element_vector: NDArray[np.floating]
+        :param global_vector: The global vector to which the local vector is mapped
+        :type global_vector: NDArray[np.floating]
+        :return: None
+        """
         global_vector[self.boundary_dofs[edge_index]] += element_vector
 
-    def assemble_mass(self, global_mass):
+    def assemble_mass(self, global_mass: NDArray[np.floating]):
+        """
+        Assemble the global mass matrix.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param global_mass: The global mass matrix to be assembled
+        :type global_mass: NDArray[np.floating]
+        :return: None
+        """
         for i, trig in enumerate(self.tri.trigs):
             print(f"Mass matrix, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
@@ -91,7 +145,16 @@ class H1Space:
             self.local_to_global(element_matrix, global_mass, i)
         print()
 
-    def assemble_gradu_gradv(self, global_gradu_gradv):
+    def assemble_gradu_gradv(self, global_gradu_gradv: NDArray[np.floating]):
+        """
+        Assemble the global stiffness matrix.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param global_gradu_gradv: The global stiffness matrix to be assembled
+        :type global_gradu_gradv: NDArray[np.floating]
+        :return: None
+        """
         for i, trig in enumerate(self.tri.trigs):
             print(f"Stiffness, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
@@ -100,7 +163,20 @@ class H1Space:
             self.local_to_global(element_matrix, global_gradu_gradv, i)
         print()
 
-    def assemble_element_vector(self, global_vector, f):
+    def assemble_element_vector(
+        self, global_vector: NDArray[np.floating], f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+    ):
+        """
+        Assemble the global load vector.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param global_vector: The global load vector to be assembled
+        :type global_vector: NDArray[np.floating]
+        :param f: load function
+        :type f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+        :return: None
+        """
         for i, trig in enumerate(self.tri.trigs):
             print(f"Load vector, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
@@ -109,7 +185,16 @@ class H1Space:
             self.local_to_global_vector(element_vector, global_vector, i)
         print()
 
-    def assemble_boundary_mass(self, global_boundary_mass):
+    def assemble_boundary_mass(self, global_boundary_mass: NDArray[np.floating]):
+        """
+        Assemble the global boundary mass matrix.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param global_boundary_mass: The global boundary mass matrix to be assembled
+        :type global_boundary_mass: NDArray[np.floating]
+        :return: None
+        """
         for i, edge in enumerate(self.tri.boundary_edges):
             print(f"Boundary mass, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])
@@ -118,7 +203,20 @@ class H1Space:
             self.local_to_global_boundary(element_matrix, global_boundary_mass, i)
         print()
 
-    def assemble_boundary_element_vector(self, global_boundary_vector, f):
+    def assemble_boundary_element_vector(
+        self, global_boundary_vector: NDArray[np.floating], f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+    ):
+        """
+        Assemble the global boundary load vector.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param global_boundary_vector: The global boundary load vector to be assembled
+        :type global_boundary_vector: NDArray[np.floating]
+        :param f: load function
+        :type f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+        :return: None
+        """
         for i, edge in enumerate(self.tri.boundary_edges):
             print(f"Boundary load vector, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])

@@ -4,7 +4,17 @@ from pyfemsolver.solverlib.space import H1Space
 from typing import Callable
 
 
-def set_boundary_values(space: H1Space, g: Callable[[NDArray[np.float64], NDArray[np.float64]], float]):
+def set_boundary_values(space: H1Space, g: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]):
+    """
+    Set boundary values for the finite element space.
+
+    :param space: H1 finite element space instance
+    :type space: H1Space
+    :param g: Function defining boundary values
+    :type g: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+    :return: boundary dof values
+    :rtype: NDArray[np.floating]
+    """
     print("set boundary vals")
     boundary_mass = np.matrix(np.zeros((space.ndof, space.ndof)))
     boundary_f_vector = np.zeros((space.ndof, 1))
@@ -37,14 +47,27 @@ def set_boundary_values(space: H1Space, g: Callable[[NDArray[np.float64], NDArra
     for i in range(len(vertex_dofs), len(space.unique_boundary_dofs)):
         u_bnd[i] /= np.sqrt(boundary_mass_diag[i])
 
-    u_bnd.shape = (len(space.unique_boundary_dofs), 1)
     print("done")
-    return u_bnd, boundary_mass, boundary_f_vector
+    return u_bnd
 
 
 def solve_by_condensation(
-    space: H1Space, system_matrix: NDArray[np.float64], f_vector: NDArray[np.float64], show_condition_number: bool = False
+    space: H1Space, system_matrix: NDArray[np.floating], f_vector: NDArray[np.floating], show_condition_number: bool = False
 ):
+    """
+    Solve the linear system of equations A * u = f for the inner dofs using static condensation.
+
+    :param space: H1 finite element space instance
+    :type space: H1Space
+    :param system_matrix: The system matrix A to be inverted
+    :type system_matrix: NDArray[np.floating]
+    :param f_vector: The right-hand side vector f
+    :type f_vector: NDArray[np.floating]
+    :param show_condition_number: Whether to print the condition number of the condensed matrix (costly operation)
+    :type show_condition_number: bool
+    :return: Solution vector
+    :rtype: NDArray[np.floating]
+    """
     print("Solve by static condensation")
     u = np.matrix(np.zeros((len(space.inner_dofs), 1)))
     ndof_bubble = 1 / 2 * len(space.tri.trigs) * (space.p - 1) * (space.p - 2)
@@ -74,8 +97,8 @@ def solve_bvp(
     a_1: float,
     a_2: float,
     space: H1Space,
-    u_bnd: Callable[[NDArray[np.float64], NDArray[np.float64]], float],
-    f: Callable[[NDArray[np.float64], NDArray[np.float64]], float],
+    u_bnd: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]],
+    f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]],
     show_condition_number: bool = False,
 ):
     mass = np.zeros((space.ndof, space.ndof))
@@ -88,7 +111,7 @@ def solve_bvp(
     space.assemble_element_vector(f_vector, f)
     print("Done")
     # set boundary values
-    u[space.unique_boundary_dofs], _, _ = set_boundary_values(space, u_bnd)
+    u[space.unique_boundary_dofs] = set_boundary_values(space, u_bnd)
 
     # the system matrix is the sum of all involved bilinear forms
     print("diagonally precondition")

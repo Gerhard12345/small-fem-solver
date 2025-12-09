@@ -4,22 +4,23 @@ The basis functions are constructed using integrated Jacobi polynomials as descr
 https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
 """
 
+from typing import Tuple, List, Callable
+
 import numpy as np
 from numpy.typing import NDArray
-from copy import copy
-from typing import Tuple, List, Callable
+
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .integrationrules import GetIntegrationRuleTrig, GetIntegrationRuleLine
 
 
-def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
+def jacobi_polynomial(n: int, x: NDArray[np.floating], alpha: float | int) -> NDArray[np.floating]:
     """
     Evaluate Jacobi polynomials of order n at points x with parameter alpha.
 
     :param n: Order of the Jacobi polynomial
     :type n: int
     :param x: Evaluation points
-    :type x: NDArray[np.float64]
+    :type x: NDArray[np.floating]
     :param alpha: The alpha parameter of the Jacobi polynomial
     :type alpha: float | int
     :return: The first n Jacobi polynomials evaluated at x
@@ -36,14 +37,14 @@ def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDA
     return vals
 
 
-def integrated_jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
+def integrated_jacobi_polynomial(n: int, x: NDArray[np.floating], alpha: float | int) -> NDArray[np.floating]:
     """
     Evaluate integrated Jacobi polynomials of order n at points x with parameter alpha.
 
     :param n: Order of the integrated Jacobi polynomial
     :type n: int
     :param x: Evaluation points
-    :type x: NDArray[np.float64]
+    :type x: NDArray[np.floating]
     :param alpha: The alpha parameter of the Jacobi polynomial
     :type alpha: float | int
     :return: The first n Jacobi polynomials evaluated at x
@@ -65,26 +66,26 @@ def integrated_jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | 
     return vals
 
 
-def barycentric_coordinates(x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
+def barycentric_coordinates(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
     """
     Computes the barycentric coordinates for a triangle with corners (-1,-1),(1,-1),(0,1).
 
     :param x: Evaluation points in x direction
-    :type x: NDArray[np.float64]
+    :type x: NDArray[np.floating]
     :param y: Evaluation points in y direction
-    :type y: NDArray[np.float64]
+    :type y: NDArray[np.floating]
     :return: Evaluated barycentric coordinates
     :rtype: NDArray[float64]
     """
     return 1 / 4 * np.array([1 - 2 * x - y, 1 + 2 * x - y, 2 + 2 * y])
 
 
-def barycentric_coordinates_line(t: NDArray[np.float64]) -> NDArray[np.float64]:
+def barycentric_coordinates_line(t: NDArray[np.floating]) -> NDArray[np.floating]:
     """
     Computes the barycentric coordinates for a line with corners (-1,0),(1,0).
 
     :param t: Evaluation points along the line
-    :type t: NDArray[np.float64]
+    :type t: NDArray[np.floating]
     :return: Evaluated barycentric coordinates
     :rtype: NDArray[float64]
     """
@@ -92,7 +93,7 @@ def barycentric_coordinates_line(t: NDArray[np.float64]) -> NDArray[np.float64]:
     return 1 / 2 * np.array([1 - t, 1 + t])
 
 
-def g(p: int, E: Tuple[int, int], x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
+def g(p: int, E: Tuple[int, int], x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
     """
     Helper function to compute edge shape functions.
     The funtion vanishes on all edges except edge E.
@@ -102,9 +103,9 @@ def g(p: int, E: Tuple[int, int], x: NDArray[np.float64], y: NDArray[np.float64]
     :param E: The edge defined by its two vertex indices (0,1), (1,2), or (2,0)
     :type E: Tuple[int, int]
     :param x: Evaluation points in x direction
-    :type x: NDArray[np.float64]
+    :type x: NDArray[np.floating]
     :param y: Evaluation points in y direction
-    :type y: NDArray[np.float64]
+    :type y: NDArray[np.floating]
     :return: Evaluated edge shape functions
     :rtype: NDArray[float64]
     """
@@ -121,7 +122,7 @@ def g(p: int, E: Tuple[int, int], x: NDArray[np.float64], y: NDArray[np.float64]
     return vals_1 * vals_2
 
 
-def h(p: int, x: NDArray[np.float64], y: NDArray[np.float64]) -> List[NDArray[np.float64]]:
+def h(p: int, x: NDArray[np.floating], y: NDArray[np.floating]) -> List[NDArray[np.floating]]:
     """
     Helper function to compute bubble shape functions. The function vanishes on edge (0,1),
     thus compensating the edge functions.
@@ -129,15 +130,15 @@ def h(p: int, x: NDArray[np.float64], y: NDArray[np.float64]) -> List[NDArray[np
     :param p: Order of the polynomial in the interior
     :type p: int
     :param x: Evaluation points in x direction
-    :type x: NDArray[np.float64]
+    :type x: NDArray[np.floating]
     :param y: Evaluation points in y direction
-    :type y: NDArray[np.float64]
+    :type y: NDArray[np.floating]
     :return: Evaluated helper functions
     :rtype: List[NDArray[float64]]
     """
     l = barycentric_coordinates(x, y)
     l1 = 2 * l[2] - 1
-    vals_1: List[NDArray[np.float64]] = []
+    vals_1: List[NDArray[np.floating]] = []
     for i in range(2, p):
         s = integrated_jacobi_polynomial(p - i, l1, 2 * i - 1)[1:, :]
         vals_1.append(s)
@@ -171,7 +172,7 @@ class H1Fel:
         """
         self.edges[i] = (self.edges[i][1], self.edges[i][0])
 
-    def shape_functions(self, x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
+    def shape_functions(self, x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
         """
         Computes the shape functions at given points (x,y) in the reference triangle.
         The first three shape functions correspond to the vertices,
@@ -181,9 +182,9 @@ class H1Fel:
         :param self: The H1 finite element instance
         :type self: H1Fel
         :param x: Evaluation points in x direction
-        :type x: NDArray[np.float64]
+        :type x: NDArray[np.floating]
         :param y: Evaluation points in y direction
-        :type y: NDArray[np.float64]
+        :type y: NDArray[np.floating]
         :return: Evaluated shape functions
         :rtype: NDArray[float64]
         """
@@ -207,7 +208,7 @@ class H1Fel:
             d0 -= 1
         return shape
 
-    def dshape_functions(self, x: NDArray[np.float64], y: NDArray[np.float64]) -> NDArray[np.float64]:
+    def dshape_functions(self, x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
         nip = x.size
         Z = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), 2 * nip))
         delta = 1e-7
@@ -244,7 +245,7 @@ class H1Fel:
 
         return Z
 
-    def edge_shape_functions(self, t: NDArray[np.float64]) -> NDArray[np.float64]:
+    def edge_shape_functions(self, t: NDArray[np.floating]) -> NDArray[np.floating]:
         """
         Computes the edge shape functions at given points t in the reference line.
         The first two shape functions correspond to the vertices, the next (p-1) to
@@ -253,7 +254,7 @@ class H1Fel:
         :param self: The H1 finite element instance
         :type self: H1Fel
         :param t: Evaluation points along the line
-        :type t: NDArray[np.float64]
+        :type t: NDArray[np.floating]
         :return: Evaluated edge shape functions
         :rtype: NDArray[float64]
         """
@@ -262,7 +263,7 @@ class H1Fel:
         Z[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
         return Z
 
-    def calc_mass_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.float64]:
+    def calc_mass_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.floating]:
         """
         Computes the mass matrix for the element defined by the given transformation.
 
@@ -280,7 +281,7 @@ class H1Fel:
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
-    def calc_gradu_gradv_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.float64]:
+    def calc_gradu_gradv_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.floating]:
         """
         Computes the stiffness matrix (grad u, grad v) for the
         element defined by the given transformation.
@@ -310,8 +311,8 @@ class H1Fel:
         return gradu_gradv
 
     def calc_element_vector(
-        self, eltrans: ElementTransformationTrig, f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
-    ) -> NDArray[np.float64]:
+        self, eltrans: ElementTransformationTrig, f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+    ) -> NDArray[np.floating]:
         """
         Computes the element vector for the element defined by the given transformation
         and the function f.
@@ -321,7 +322,7 @@ class H1Fel:
         :param eltrans: The element transformation for the triangle
         :type eltrans: ElementTransformationTrig
         :param f: The function to be integrated over the element
-        :type f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        :type f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
         :return: The element vector for the element and function f.
         :rtype: NDArray[float64]
         """
@@ -338,7 +339,7 @@ class H1Fel:
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
 
-    def calc_edge_mass_matrix(self, eltrans: ElementTransformationLine) -> NDArray[np.float64]:
+    def calc_edge_mass_matrix(self, eltrans: ElementTransformationLine) -> NDArray[np.floating]:
         """
         Computes the mass matrix for an edge defined by the given transformation.
 
@@ -357,8 +358,8 @@ class H1Fel:
         return mass
 
     def calc_edge_element_vector(
-        self, eltrans: ElementTransformationLine, f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
-    ) -> NDArray[np.float64]:
+        self, eltrans: ElementTransformationLine, f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
+    ) -> NDArray[np.floating]:
         """
         Computes the element vector for an edge defined by the given transformation
         and the function f.
@@ -368,7 +369,7 @@ class H1Fel:
         :param eltrans: The element transformation for the line
         :type eltrans: ElementTransformationLine
         :param f: The function to be integrated over the edge
-        :type f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        :type f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
         :return: The element vector for the edge and function f.
         :rtype: NDArray[float64]
         """
@@ -383,7 +384,3 @@ class H1Fel:
         element_vector = (shape * omega) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
-
-
-def print_matrix(temp: NDArray[np.float64]):
-    print(np.array2string(temp).replace("\n", "").replace("]", "]\n"))
