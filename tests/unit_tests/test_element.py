@@ -6,8 +6,8 @@ from src.pyfemsolver.solverlib.element import (
     barycentric_coordinates_line,
     jacobi_polynomial,
     integrated_jacobi_polynomial,
-    duffy,
 )
+from src.pyfemsolver.solverlib.integrationrules import duffy
 from src.pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig, ElementTransformationLine
 
 

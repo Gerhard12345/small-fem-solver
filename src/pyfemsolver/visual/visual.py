@@ -1,7 +1,8 @@
 import numpy as np
 import matplotlib.pyplot as plt
 from pyfemsolver.solverlib.meshing import Triangulation
-from pyfemsolver.solverlib.element import barycentric_coordinates, barycentric_coordinates_line, duffy
+from pyfemsolver.solverlib.integrationrules import duffy
+from pyfemsolver.solverlib.element import barycentric_coordinates, barycentric_coordinates_line
 from pyfemsolver.solverlib.space import H1Space
 
 

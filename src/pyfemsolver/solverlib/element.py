@@ -9,6 +9,7 @@ from numpy.typing import NDArray
 from copy import copy
 from typing import Tuple, List, Callable
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
+from .integrationrules import GetIntegrationRuleTrig, GetIntegrationRuleLine
 
 def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     """
@@ -143,11 +144,11 @@ def h(p: int, x: NDArray[np.float64], y: NDArray[np.float64]) -> List[NDArray[np
     return vals_1
 
 
-def duffy(zeta: NDArray[np.float64], eta: NDArray[np.float64]) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-    return 0.5 * zeta * (1 - eta), eta
-
-
 class H1Fel:
+    # Class-level integration rule instances (shared across all instances)
+    _integration_rule_trig = GetIntegrationRuleTrig()
+    _integration_rule_line = GetIntegrationRuleLine()
+    
     def __init__(self, order: int):
         self.p = order
         self.edges = [(0, 1), (1, 2), (2, 0)]
@@ -260,19 +261,6 @@ class H1Fel:
         Z[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
         return Z
 
-    def get_integration_rule_trig(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64], NDArray[np.floating]]:
-        nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
-        X, Y = np.meshgrid(nodes, nodes)
-        X_t, Y_t = duffy(X, Y)
-        X_t = X_t.flatten()
-        Y_t = Y_t.flatten()
-        omega = np.outer(weights * 1.0 / 2.0 * (1.0 - nodes), weights).flatten()
-        return X_t, Y_t, omega
-
-    def get_integration_rule_line(self, p: int) -> Tuple[NDArray[np.float64], NDArray[np.float64]]:
-        nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
-        return nodes, weights
-
     def calc_mass_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.float64]:
         """
         Computes the mass matrix for the element defined by the given transformation.
@@ -284,7 +272,7 @@ class H1Fel:
         :return: The mass matrix of the element
         :rtype: NDArray[float64]
         """
-        X, Y, omega = self.get_integration_rule_trig(self.p)
+        X, Y, omega = self._integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         mass = (shape * omega) @ shape.T
@@ -303,7 +291,7 @@ class H1Fel:
         :return: The stiffness matrix of the element
         :rtype: NDArray[float64]
         """
-        X, Y, omega = self.get_integration_rule_trig(self.p + 1)
+        X, Y, omega = self._integration_rule_trig(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         omegas_2 = np.zeros((2 * omega.shape[0],))
         omegas_2[: len(omega)] = omega
@@ -336,7 +324,7 @@ class H1Fel:
         :return: The element vector for the element and function f.
         :rtype: NDArray[float64]
         """
-        X, Y, omega = self.get_integration_rule_trig(self.p)
+        X, Y, omega = self._integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         X.shape = (X.shape[0], 1)
@@ -360,7 +348,7 @@ class H1Fel:
         :return: The mass matrix for the edge.
         :rtype: NDArray[float64]
         """
-        X, omega = self.get_integration_rule_line(self.p)
+        X, omega = self._integration_rule_line(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
         mass = (shape * omega) @ shape.T
@@ -383,7 +371,7 @@ class H1Fel:
         :return: The element vector for the edge and function f.
         :rtype: NDArray[float64]
         """
-        X, omega = self.get_integration_rule_line(self.p)
+        X, omega = self._integration_rule_line(self.p)
         X.shape = (X.shape[0], 1)
         x, y = barycentric_coordinates_line(X)
         XY_phys = eltrans.points[0, :] * x + eltrans.points[1, :] * y
