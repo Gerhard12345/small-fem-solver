@@ -1,8 +1,8 @@
-import numpy as np
-from scipy.spatial import Delaunay  # type: ignore
 from typing import Dict, List, Tuple
-from numpy.typing import NDArray
 from dataclasses import dataclass
+import numpy as np
+from numpy.typing import NDArray
+from scipy.spatial import Delaunay  # pylint:disable=E0611 # type:ignore
 
 from .geometry import Geometry, Line, Region
 
