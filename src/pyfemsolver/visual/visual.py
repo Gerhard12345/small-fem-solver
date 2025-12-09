@@ -40,8 +40,8 @@ def show_grid_function(
     y_coords = [point.coordinates[1] for point in space.tri.points]
     ax.triplot(x_coords, y_coords, trigs)  # type: ignore
     ax.plot(x_coords, y_coords, "o")  # type: ignore
-    min_val = 1e16
-    max_val = -1e16
+    min_val: float = 1e16
+    max_val: float = -1e16
     for i, trig in enumerate(space.tri.trigs):
         x = np.arange(-1, 1 + dx, dx)
         y = np.arange(-1, 1 + dy, dy)
