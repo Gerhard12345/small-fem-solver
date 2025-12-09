@@ -158,8 +158,7 @@ class TestElement:
         fel = H1Fel(order=2)
         points = np.array([[-1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
         eltrans = ElementTransformationTrig(points)
-        f_const = lambda x, y: np.ones_like(x)  # type: ignore
-        elem_vec = fel.calc_element_vector(eltrans, f_const)  # type: ignore
+        elem_vec = fel.calc_element_vector(eltrans, lambda x, _: np.ones_like(x))
         for i in range(3):
             assert np.allclose(elem_vec[i].sum(), 1.0 / 3.0, atol=1e-6)
         for i in range(3, 6):
@@ -186,7 +185,7 @@ class TestElement:
         fel = H1Fel(order=2)
         edge_pts = np.array([[-1.0, 0.0], [1.0, 0.0]])
         eltrans = ElementTransformationLine(edge_pts)
-        edge_vec = fel.calc_edge_element_vector(eltrans, lambda x, y: np.ones_like(x))
+        edge_vec = fel.calc_edge_element_vector(eltrans, lambda x, _: np.ones_like(x))
         for i in range(2):
             assert np.allclose(edge_vec[i].sum(), 1.0, atol=1e-6)
         assert np.allclose(edge_vec[2].sum(), -2.0 / 3.0, atol=1e-6)
