@@ -183,7 +183,7 @@ class H1Fel:
         Computes the shape functions at given points (x,y) in the reference triangle.
         The first three shape functions correspond to the vertices,
         the next 3*(p-1) to the edges, and the remaining to the interior bubble
-        functions.
+        functions. Shape functions are constructed using integrated Jacobi polynomials.
 
         :param self: The H1 finite element instance
         :type self: H1Fel
@@ -191,7 +191,7 @@ class H1Fel:
         :type x: NDArray[np.floating]
         :param y: Evaluation points in y direction
         :type y: NDArray[np.floating]
-        :return: Evaluated shape functions
+        :return: Evaluated shape functions (row index corresponds to shape function, column index to evaluation point)
         :rtype: NDArray[float64]
         """
         shape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), *x.shape))
@@ -215,22 +215,37 @@ class H1Fel:
         return shape
 
     def dshape_functions(self, x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
+        """
+        Computes the shape functions gradients at given points (x,y) in the reference triangle.
+        The first three shape functions correspond to the vertices,
+        the next 3*(p-1) to the edges, and the remaining to the interior bubble
+        functions.
+
+        :param self: The H1 finite element instance
+        :type self: H1Fel
+        :param x: Evaluation points in x direction
+        :type x: NDArray[np.floating]
+        :param y: Evaluation points in y direction
+        :type y: NDArray[np.floating]
+        :return: Evaluated gradients of shape functions. First half are d/dx, second half d/dy (row wise)
+        :rtype: NDArray[float64]
+        """
         nip = x.size
-        Z = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), 2 * nip))
+        dshape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), 2 * nip))
         delta = 1e-7
-        Z[:3, :nip] = (barycentric_coordinates(x + delta, y) - barycentric_coordinates(x - delta, y)) / (2 * delta)
-        Z[:3, nip:] = (barycentric_coordinates(x, y + delta) - barycentric_coordinates(x, y - delta)) / (2 * delta)
+        dshape[:3, :nip] = (barycentric_coordinates(x + delta, y) - barycentric_coordinates(x - delta, y)) / (2 * delta)
+        dshape[:3, nip:] = (barycentric_coordinates(x, y + delta) - barycentric_coordinates(x, y - delta)) / (2 * delta)
         if self.p == 1:
-            return Z
+            return dshape
         for i in range(3):
-            Z[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :nip] = (
+            dshape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :nip] = (
                 1 / (2 * delta) * (g(self.p, self.edges[i], x + delta, y) - g(self.p, self.edges[i], x - delta, y))
             )
-            Z[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), nip:] = (
+            dshape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), nip:] = (
                 1 / (2 * delta) * (g(self.p, self.edges[i], x, y + delta) - g(self.p, self.edges[i], x, y - delta))
             )
         if self.p < 3:
-            return Z
+            return dshape
         tsp = h(self.p, x + delta, y)
         tsm = h(self.p, x - delta, y)
         tspy = h(self.p, x, y + delta)
@@ -244,12 +259,12 @@ class H1Fel:
         gmy = g(self.p, self.edges[0], x, y - delta)
 
         for i in range(2, self.p):
-            Z[i0 : i0 + d0, :nip] = (gp[i - 2] * tsp[i - 2] - gm[i - 2] * tsm[i - 2]) / (2 * delta)
-            Z[i0 : i0 + d0, nip:] = (gpy[i - 2] * tspy[i - 2] - gmy[i - 2] * tsmy[i - 2]) / (2 * delta)
+            dshape[i0 : i0 + d0, :nip] = (gp[i - 2] * tsp[i - 2] - gm[i - 2] * tsm[i - 2]) / (2 * delta)
+            dshape[i0 : i0 + d0, nip:] = (gpy[i - 2] * tspy[i - 2] - gmy[i - 2] * tsmy[i - 2]) / (2 * delta)
             i0 = i0 + d0
             d0 -= 1
 
-        return Z
+        return dshape
 
     def edge_shape_functions(self, t: NDArray[np.floating]) -> NDArray[np.floating]:
         """
@@ -264,10 +279,10 @@ class H1Fel:
         :return: Evaluated edge shape functions
         :rtype: NDArray[float64]
         """
-        Z = np.zeros((self.p + 1, *t.shape))
-        Z[:2, :] = barycentric_coordinates_line(t)
-        Z[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
-        return Z
+        shape = np.zeros((self.p + 1, *t.shape))
+        shape[:2, :] = barycentric_coordinates_line(t)
+        shape[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
+        return shape
 
     def calc_mass_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.floating]:
         """

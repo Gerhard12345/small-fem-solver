@@ -145,10 +145,10 @@ def generate_inner_points(region: Region, lines: List[Line], tolerance: float = 
     region_id = region.region_id
     mesh_size = region.mesh_inner
     # Determine bounds from lines for the region
-    min_x = min(line.start[0] for line in lines if line.left_region == region_id or line.right_region == region_id)
-    max_x = max(line.end[0] for line in lines if line.left_region == region_id or line.right_region == region_id)
-    min_y = min(line.start[1] for line in lines if line.left_region == region_id or line.right_region == region_id)
-    max_y = max(line.end[1] for line in lines if line.left_region == region_id or line.right_region == region_id)
+    min_x = min(line.start[0] for line in lines if region_id in (line.left_region, line.right_region))
+    max_x = max(line.end[0] for line in lines if region_id in (line.left_region, line.right_region))
+    min_y = min(line.start[1] for line in lines if region_id in (line.left_region, line.right_region))
+    max_y = max(line.end[1] for line in lines if region_id in (line.left_region, line.right_region))
 
     # Iterate through the region bounds using calculated meshes
     x = min_x
@@ -216,7 +216,7 @@ def point_in_region(point: Tuple[float, float], lines: List[Line], region_id: in
         start = np.array(line.start)
         end = np.array(line.end)
 
-        if line.right_region == region_id or line.left_region == region_id:
+        if region_id in (line.left_region, line.right_region):
             if ((start[1] <= y < end[1]) or (end[1] <= y < start[1])) and (
                 x < (end[0] - start[0]) * (y - start[1]) / (end[1] - start[1]) + start[0]
             ):
@@ -348,7 +348,7 @@ def get_restricted_mesh_size(point: Tuple[float, float], geometry: Geometry, max
     boundary_size = 1.0
 
     for line in geometry.lines:
-        if line.left_region == region_id or line.right_region == region_id:
+        if region_id in (line.left_region, line.right_region):
             dist = point_to_line_distance(point, line)
             if dist < min_distance:
                 min_distance = dist

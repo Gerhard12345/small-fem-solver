@@ -9,12 +9,6 @@ from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Geometry, Line, Region
 
 
-height = 0.6
-width = 2.4
-center_x = [0, 0]
-center_y = [-2, 2]
-
-
 lines: List[Line] = []
 
 lines.append(Line(start=(-6, -6), end=(6, -6), left_region=1, right_region=0, h=4, boundary_index=1))
@@ -27,16 +21,12 @@ regions.append(Region(region_id=1, mesh_inner=4))
 geometry = Geometry(lines=lines, regions=regions)
 
 
-max_gradient = 0.4
-t = generate_mesh(geometry, max_gradient)
+t = generate_mesh(geometry, max_gradient=0.4)
 
 
 space = H1Space(t, 2)
-
-safety = 0.01
-
 u = np.zeros((space.ndof, 1))
-dof = 3
+dof = 3  # pylint:disable=C0103
 ax, mini, maxi = show_shape(dof, space, vrange=(0, 1), dx=0.2, dy=0.2)
 show_edge_shape(15, space)
 ax.set_zlim([0, 1])  # type:ignore

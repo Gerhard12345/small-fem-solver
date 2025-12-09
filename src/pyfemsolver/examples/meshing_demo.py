@@ -63,7 +63,7 @@ if __name__ == "__main__":
     x_coords = np.linspace(0.01, 3.99, 200)
     y_coords = np.linspace(0.01, 1.99, 100)
     mesh_sizes = np.zeros((y_coords.size, x_coords.size))
-    max_gradient = 0.2
+    max_gradient = 0.2  # pylint:disable=C0103
     for i, x in enumerate(x_coords):
         for j, y in enumerate(y_coords):
             point = (x, y)
