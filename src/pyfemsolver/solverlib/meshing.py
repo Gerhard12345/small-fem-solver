@@ -81,7 +81,8 @@ def generate_points_on_lines(geometry: Geometry, tolerance: float = 1e-6) -> Tup
         local_is_inner_points = [line.left_region != 0 and line.right_region != 0] * len(line_points)
         is_inner_point.extend(local_is_inner_points)
         # Remove duplicates within a numerical tolerance. group points according to equivalence classes within rounding tolerance.
-        # Store for each group all potential different values for "is_boundary". This can arise from a point being in multiple lines, forming a t crossing:
+        # Store for each group all potential different values for "is_boundary". This can arise from a point being in multiple lines
+        # forming a t crossing:
         # ------------------P--------------------
         #     l_1           |      l_2
         #                   |
@@ -90,7 +91,8 @@ def generate_points_on_lines(geometry: Geometry, tolerance: float = 1e-6) -> Tup
         #                   |  l_3
         #                   |
         #
-        # P has 3 different is_inner_point indicators. for l_1 and l_2 it is said to be a boundary point, for line l_3 it is an inner point (since the line is an inner line).
+        # P has 3 different is_inner_point indicators. for l_1 and l_2 it is said to be a boundary point, for line l_3
+        # it is an inner point (since the line is an inner line).
         # If P is in at least one outside line, then it is said to be an outside point.
     groups: Dict[Tuple[float, float], List[bool]] = {}
     for el, is_local_inner_point in zip(points, is_inner_point):
