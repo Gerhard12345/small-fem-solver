@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from copy import copy
 from typing import Tuple, List, Callable
-
+from pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig, ElementTransformationLine
 
 def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     """
@@ -285,14 +285,9 @@ class H1Fel:
         :return: The mass matrix of the element
         :rtype: NDArray[float64]
         """
-        J = np.array(
-            [
-                0.5 * (points[1, :] - points[0, :]),
-                0.25 * (2 * points[2] - points[1] - points[0]),
-            ]
-        )
+        eltrans = ElementTransformationTrig(points)
         X, Y, omega = self.get_integration_rule_trig(self.p)
-        omega *= abs(np.linalg.det(J))
+        omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         mass = (shape * omega) @ shape.T
         mass[np.abs(mass) < 1e-16] = 0
@@ -311,24 +306,19 @@ class H1Fel:
         :return: The stiffness matrix of the element
         :rtype: NDArray[float64]
         """
-        J = np.matrix(
-            [
-                0.5 * (points[1, :] - points[0, :]),
-                0.25 * (2 * points[2] - points[1] - points[0]),
-            ]
-        )
+        eltrans = ElementTransformationTrig(points)
         X, Y, omega = self.get_integration_rule_trig(self.p + 1)
-        omega *= abs(np.linalg.det(J))
+        omega *= eltrans.getjacobian_determinant()
         omegas_2 = np.zeros((2 * omega.shape[0],))
         omegas_2[: len(omega)] = omega
         omegas_2[len(omega) :] = omega
         dshape = self.dshape_functions(X, Y)
-        J = np.matrix(J) ** -1
+        Jinv = eltrans.get_jacobian_inverse()
         for i in range(self.ndof):
             temp = np.matrix(dshape[i, :].copy())
             temp.shape = (2, len(omega))
             temp = np.matrix(temp)
-            temp2 = J * temp
+            temp2 = Jinv @ temp
             temp2.shape = (1, len(omegas_2))
             dshape[i, :] = temp2
         gradu_gradv = (dshape * omegas_2) @ dshape.T
@@ -351,15 +341,9 @@ class H1Fel:
         :return: The element vector for the element and function f.
         :rtype: NDArray[float64]
         """
-        J = np.matrix(
-            [
-                0.5 * (points[1, :] - points[0, :]),
-                0.25 * (2 * points[2] - points[1] - points[0]),
-            ]
-        )
-
+        eltrans = ElementTransformationTrig(points)
         X, Y, omega = self.get_integration_rule_trig(self.p)
-        omega *= abs(np.linalg.det(J))
+        omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         X.shape = (X.shape[0], 1)
         Y.shape = (Y.shape[0], 1)
@@ -383,9 +367,9 @@ class H1Fel:
         :return: The mass matrix for the edge.
         :rtype: NDArray[float64]
         """
-        J = 0.5 * np.linalg.norm(points[1, :] - points[0, :])
+        eltrans = ElementTransformationLine(points)
         X, omega = self.get_integration_rule_line(self.p)
-        omega *= abs(J)
+        omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
         mass = (shape * omega) @ shape.T
         mass[np.abs(mass) < 1e-16] = 0
@@ -407,14 +391,14 @@ class H1Fel:
         :return: The element vector for the edge and function f.
         :rtype: NDArray[float64]
         """
-        J = 0.5 * np.linalg.norm(points[1, :] - points[0, :])
+        eltrans = ElementTransformationLine(points)
         X, omega = self.get_integration_rule_line(self.p)
         X.shape = (X.shape[0], 1)
         x, y = barycentric_coordinates_line(X)
         XY_phys = points[0, :] * x + points[1, :] * y
         f_vals = f(XY_phys[:, 0], XY_phys[:, 1])
         f_vals.shape = (f_vals.shape[0], 1)
-        omega *= J
+        omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X.flatten())
         element_vector = (shape * omega) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
