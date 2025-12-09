@@ -11,6 +11,7 @@ from typing import Tuple, List, Callable
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .integrationrules import GetIntegrationRuleTrig, GetIntegrationRuleLine
 
+
 def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     """
     Evaluate Jacobi polynomials of order n at points x with parameter alpha.
@@ -148,7 +149,7 @@ class H1Fel:
     # Class-level integration rule instances (shared across all instances)
     _integration_rule_trig = GetIntegrationRuleTrig()
     _integration_rule_line = GetIntegrationRuleLine()
-    
+
     def __init__(self, order: int):
         self.p = order
         self.edges = [(0, 1), (1, 2), (2, 0)]

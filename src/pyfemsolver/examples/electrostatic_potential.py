@@ -2,7 +2,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 from pyfemsolver.solverlib.space import H1Space
 from pyfemsolver.solverlib.solving import solve_bvp
-from pyfemsolver.visual.visual import show_grid_function
+from pyfemsolver.visual.visual import show_grid_function, show_gradient_of_grid_function, show_gradient_as_quiver
 from pyfemsolver.solverlib.meshing import generate_mesh
 
 
@@ -118,4 +118,8 @@ def u_bound(x, y):
 u1, mass1, f_vector1 = solve_bvp(0, 1, space, u_bound, lambda x, y: np.zeros(x.shape))
 ax, mini, maxi = show_grid_function(u1, space, vrange=[-100, 100], dx=0.05, dy=0.05)
 ax.set_zlim([-100, 100])
+ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=[-100, 100], dx=0.1, dy=0.1)
+ax_x.set_zlim([-500, 500])
+ax_y.set_zlim([-500, 500])
+ax, maxi, mini = show_gradient_as_quiver(u1, space, dx=0.2, dy=0.2)
 plt.show()

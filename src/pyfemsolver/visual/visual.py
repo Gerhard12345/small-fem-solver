@@ -91,3 +91,202 @@ def show_boundary_function(g, tri: Triangulation, ax: plt.Axes):
         )
         vals = g(xy[:, 0], xy[:, 1])
         ax.plot(xy[:, 0], xy[:, 1], vals, linewidth=7)
+
+
+def show_gradient_of_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
+    """Display x and y components of the gradient of a grid function as surfaces.
+
+    Creates a figure with two 3D surface plots side-by-side:
+    1) Left plot: x-component of the gradient
+    2) Right plot: y-component of the gradient
+
+    :param u: Coefficient vector for the grid function
+    :param space: H1 space instance
+    :param vrange: [min_value, max_value] for color scaling
+    :param dx: Grid spacing in x-direction (default 0.01)
+    :param dy: Grid spacing in y-direction (default 0.01)
+    :return: Tuple of (ax_dx, ax_dy, min_val, max_val) where ax_dx and ax_dy are the axes
+    """
+    from pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig
+
+    fig = plt.figure(figsize=(14, 6))
+    ax_dx = fig.add_subplot(1, 2, 1, projection="3d")
+    ax_dy = fig.add_subplot(1, 2, 2, projection="3d")
+
+    trigs = [trig.points for trig in space.tri.trigs]
+    x_coords = [point.coordinates[0] for point in space.tri.points]
+    y_coords = [point.coordinates[1] for point in space.tri.points]
+
+    # Setup both axes with mesh
+    for ax in [ax_dx, ax_dy]:
+        ax.triplot(x_coords, y_coords, trigs)
+        ax.plot(x_coords, y_coords, "o")
+
+    min_val = 1e16
+    max_val = -1e16
+
+    for i, trig in enumerate(space.tri.trigs):
+        x = np.arange(-1, 1 + dx, dx)
+        y = np.arange(-1, 1 + dy, dy)
+        X, Y = np.meshgrid(x, y)
+        X_t, Y_t = duffy(X, Y)
+        s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())
+
+        A = np.array(space.tri.points[trig.points[0]].coordinates)
+        A.shape = (2, 1)
+        B = np.array(space.tri.points[trig.points[1]].coordinates)
+        B.shape = (2, 1)
+        C = np.array(space.tri.points[trig.points[2]].coordinates)
+        C.shape = (2, 1)
+        trig_nodes = A * s[0, :] + B * s[1, :] + C * s[2, :]
+
+        fel = space.elements[i]
+        dshape = fel.dshape_functions(X_t.flatten(), Y_t.flatten())
+
+        # Apply Jacobian inverse transformation to map gradients from reference to physical space
+        # Create element transformation to get Jacobian inverse
+        points = np.array([space.tri.points[p].coordinates for p in trig.points])
+        eltrans = ElementTransformationTrig(points)
+        Jinv = eltrans.get_jacobian_inverse()
+
+        # Transform dshape with Jacobian inverse
+        nip = X_t.flatten().shape[0]
+        dshape_transformed = dshape.copy()
+        for j in range(fel.ndof):
+            temp = dshape[j, :].copy()
+            temp.shape = (2, nip)
+            temp2 = Jinv @ temp
+            temp2.shape = (2 * nip,)
+            dshape_transformed[j, :] = temp2
+
+        # Compute gradient components with transformed derivatives
+        dx_vals = np.matrix(dshape_transformed[:, :nip].T) * u[space.dofs[i]]
+        dy_vals = np.matrix(dshape_transformed[:, nip:].T) * u[space.dofs[i]]
+
+        min_val = np.min([min_val, np.min(dx_vals), np.min(dy_vals)])
+        max_val = np.max([max_val, np.max(dx_vals), np.max(dy_vals)])
+
+        # Plot x-gradient
+        ax_dx.plot_surface(
+            trig_nodes[0, :].reshape(len(x), len(y)),
+            trig_nodes[1, :].reshape(len(x), len(y)),
+            dx_vals.reshape(len(x), len(y)),
+            cmap="jet",
+            linestyle="None",
+            vmin=vrange[0],
+            vmax=vrange[1],
+        )
+
+        # Plot y-gradient
+        ax_dy.plot_surface(
+            trig_nodes[0, :].reshape(len(x), len(y)),
+            trig_nodes[1, :].reshape(len(x), len(y)),
+            dy_vals.reshape(len(x), len(y)),
+            cmap="jet",
+            linestyle="None",
+            vmin=vrange[0],
+            vmax=vrange[1],
+        )
+
+    ax_dx.set_title("∂u/∂x")
+    ax_dy.set_title("∂u/∂y")
+
+    return ax_dx, ax_dy, min_val, max_val
+
+
+def show_gradient_as_quiver(u, space: H1Space, dx=0.1, dy=0.1):
+    """Display the gradient of a grid function as a quiver plot.
+
+    Creates a 2D quiver plot showing the gradient vector field as arrows.
+
+    :param u: Coefficient vector for the grid function
+    :param space: H1 space instance
+    :param dx: Grid spacing in x-direction (default 0.1)
+    :param dy: Grid spacing in y-direction (default 0.1)
+    :return: Tuple of (ax, min_grad, max_grad) where ax is the axes and
+             min_grad and max_grad are the minimum and maximum gradient magnitudes
+    """
+    from pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig
+
+    fig = plt.figure(figsize=(10, 8))
+    ax = fig.add_subplot(1, 1, 1)
+
+    trigs = [trig.points for trig in space.tri.trigs]
+    x_coords = [point.coordinates[0] for point in space.tri.points]
+    y_coords = [point.coordinates[1] for point in space.tri.points]
+
+    ax.triplot(x_coords, y_coords, trigs)
+    ax.plot(x_coords, y_coords, "o")
+
+    min_grad = 1e16
+    max_grad = -1e16
+
+    # Collect all gradient vectors
+    all_x_phys = []
+    all_y_phys = []
+    all_dx = []
+    all_dy = []
+
+    for i, trig in enumerate(space.tri.trigs):
+        x = np.arange(-1, 1 + dx, dx)
+        y = np.arange(-1, 1 + dy, dy)
+        X, Y = np.meshgrid(x, y)
+        X_t, Y_t = duffy(X, Y)
+        s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())
+
+        A = np.array(space.tri.points[trig.points[0]].coordinates)
+        A.shape = (2, 1)
+        B = np.array(space.tri.points[trig.points[1]].coordinates)
+        B.shape = (2, 1)
+        C = np.array(space.tri.points[trig.points[2]].coordinates)
+        C.shape = (2, 1)
+        trig_nodes = A * s[0, :] + B * s[1, :] + C * s[2, :]
+
+        fel = space.elements[i]
+        dshape = fel.dshape_functions(X_t.flatten(), Y_t.flatten())
+
+        # Apply Jacobian inverse transformation to map gradients from reference to physical space
+        # Create element transformation to get Jacobian inverse
+        points = np.array([space.tri.points[p].coordinates for p in trig.points])
+        eltrans = ElementTransformationTrig(points)
+        Jinv = eltrans.get_jacobian_inverse()
+
+        # Transform dshape with Jacobian inverse
+        nip = X_t.flatten().shape[0]
+        dshape_transformed = dshape.copy()
+        for j in range(fel.ndof):
+            temp = dshape[j, :].copy()
+            temp.shape = (2, nip)
+            temp2 = Jinv @ temp
+            temp2.shape = (2 * nip,)
+            dshape_transformed[j, :] = temp2
+
+        # Compute gradient components with transformed derivatives
+        dx_vals = np.array(np.matrix(dshape_transformed[:, :nip].T) * u[space.dofs[i]]).flatten()
+        dy_vals = np.array(np.matrix(dshape_transformed[:, nip:].T) * u[space.dofs[i]]).flatten()
+
+        grad_mag = np.sqrt(dx_vals**2 + dy_vals**2)
+        min_grad = np.min([min_grad, np.min(grad_mag)])
+        max_grad = np.max([max_grad, np.max(grad_mag)])
+
+        all_x_phys.extend(trig_nodes[0, :])
+        all_y_phys.extend(trig_nodes[1, :])
+        all_dx.extend(dx_vals)
+        all_dy.extend(dy_vals)
+
+    all_x_phys = np.array(all_x_phys)
+    all_y_phys = np.array(all_y_phys)
+    all_dx = np.array(all_dx)
+    all_dy = np.array(all_dy)
+
+    grad_mag = np.sqrt(all_dx**2 + all_dy**2)
+
+    # Create quiver plot with color based on gradient magnitude
+    quiv = ax.quiver(all_x_phys, all_y_phys, all_dx, all_dy, grad_mag, cmap="jet", scale=None)
+    plt.colorbar(quiv, ax=ax, label="Gradient Magnitude")
+    ax.set_aspect("equal")
+    ax.set_title("Gradient Vector Field")
+    ax.set_xlabel("x")
+    ax.set_ylabel("y")
+
+    return ax, min_grad, max_grad
