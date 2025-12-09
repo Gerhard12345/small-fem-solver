@@ -3,7 +3,7 @@ from typing import Tuple, Callable
 import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
-from mpl_toolkits.mplot3d.axes3d import Axes3D
+from mpl_toolkits.mplot3d.axes3d import Axes3D  # type: ignore
 
 from ..solverlib.meshing import Triangulation
 from ..solverlib.integrationrules import duffy
@@ -46,13 +46,13 @@ def show_grid_function(
         X, Y = np.meshgrid(x, y)
         X_t, Y_t = duffy(X, Y)
         s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())
-        A = np.array(space.tri.points[trig.points[0]].coordinates)
-        A.shape = (2, 1)
-        B = np.array(space.tri.points[trig.points[1]].coordinates)
-        B.shape = (2, 1)
-        C = np.array(space.tri.points[trig.points[2]].coordinates)
-        C.shape = (2, 1)
-        trig_nodes = A * s[0, :] + B * s[1, :] + C * s[2, :]
+        node_0 = np.array(space.tri.points[trig.points[0]].coordinates)
+        node_0.shape = (2, 1)
+        node_1 = np.array(space.tri.points[trig.points[1]].coordinates)
+        node_1.shape = (2, 1)
+        node_2 = np.array(space.tri.points[trig.points[2]].coordinates)
+        node_2.shape = (2, 1)
+        trig_nodes = node_0 * s[0, :] + node_1 * s[1, :] + node_2 * s[2, :]
         fel = space.elements[i]
         shape = fel.shape_functions(X_t.flatten(), Y_t.flatten())
         values = np.matrix(shape.T) * u[space.dofs[i]]
@@ -111,6 +111,7 @@ def show_edge_shape(trig_number: int, space: H1Space, ax: Axes3D | None = None):
     t.shape = (t.shape[0], 1)
     x, y = barycentric_coordinates_line(t)
     use_new_axes = False
+    fig = None
     if not ax:
         use_new_axes = True
         fig = plt.figure()  # type: ignore
@@ -200,13 +201,13 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
         X_t, Y_t = duffy(X, Y)
         s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())
 
-        A = np.array(space.tri.points[trig.points[0]].coordinates)
-        A.shape = (2, 1)
-        B = np.array(space.tri.points[trig.points[1]].coordinates)
-        B.shape = (2, 1)
-        C = np.array(space.tri.points[trig.points[2]].coordinates)
-        C.shape = (2, 1)
-        trig_nodes = A * s[0, :] + B * s[1, :] + C * s[2, :]
+        node_0 = np.array(space.tri.points[trig.points[0]].coordinates)
+        node_0.shape = (2, 1)
+        node_1 = np.array(space.tri.points[trig.points[1]].coordinates)
+        node_1.shape = (2, 1)
+        node_2 = np.array(space.tri.points[trig.points[2]].coordinates)
+        node_2.shape = (2, 1)
+        trig_nodes = node_0 * s[0, :] + node_1 * s[1, :] + node_2 * s[2, :]
 
         fel = space.elements[i]
         dshape = fel.dshape_functions(X_t.flatten(), Y_t.flatten())
