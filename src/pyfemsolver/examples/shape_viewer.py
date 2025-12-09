@@ -34,7 +34,7 @@ safety = 0.01
 
 u = np.zeros((space.ndof, 1))
 dof = 3
-ax, mini, maxi = show_shape(dof, space, vrange=[0, 1], dx=0.2, dy=0.2)
+ax, mini, maxi = show_shape(dof, space, vrange=(0, 1), dx=0.2, dy=0.2)
 show_edge_shape(15, space)
-ax.set_zlim([0, 1])
-plt.show()
+ax.set_zlim([0, 1])  # type:ignore
+plt.show()  # type:ignore

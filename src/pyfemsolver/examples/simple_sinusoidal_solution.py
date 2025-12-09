@@ -1,5 +1,6 @@
 import matplotlib.pyplot as plt
 import numpy as np
+from numpy.typing import NDArray
 from pyfemsolver.solverlib.space import H1Space
 from pyfemsolver.solverlib.solving import solve_bvp
 from pyfemsolver.visual.visual import show_grid_function
@@ -7,12 +8,12 @@ from pyfemsolver.visual.visual import show_boundary_function
 from pyfemsolver.solverlib.meshing import generate_mesh
 
 
-def f(x, y):
+def f(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
     # return np.ones(x.shape)
     return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
-def u_bnd(x, y):
+def u_bnd(x: NDArray[np.floating], _: NDArray[np.floating]) -> NDArray[np.floating]:
     return np.zeros(x.shape)
 
 
@@ -41,8 +42,8 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_me
 
     space = H1Space(mesh, order)
     u, mass, f_vector = solve_bvp(0, 1, space, u_bnd, f)
-    ax, mini, maxi = show_grid_function(u, space, vrange=[-0.035, 0.035], dx=plot_spacing, dy=plot_spacing)
+    ax, mini, maxi = show_grid_function(u, space, vrange=(-0.035, 0.035), dx=plot_spacing, dy=plot_spacing)
     show_boundary_function(u_bnd, mesh, ax)
     print(mini, maxi)
-    ax.set_zlim([-5.0, 5.0])
-    plt.show()
+    ax.set_zlim([-5.0, 5.0])  # type:ignore
+    plt.show()  # type:ignore

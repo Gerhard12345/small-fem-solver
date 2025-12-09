@@ -1,9 +1,11 @@
 import matplotlib.pyplot as plt
 import numpy as np
-from pyfemsolver.solverlib.space import H1Space
-from pyfemsolver.solverlib.solving import solve_bvp
-from pyfemsolver.visual.visual import show_grid_function, show_gradient_of_grid_function, show_gradient_as_quiver
-from pyfemsolver.solverlib.meshing import generate_mesh
+from numpy.typing import NDArray
+
+from ..solverlib.space import H1Space
+from ..solverlib.solving import solve_bvp
+from ..visual.visual import show_grid_function, show_gradient_of_grid_function
+from ..solverlib.meshing import generate_mesh
 
 
 height = 0.6
@@ -91,21 +93,17 @@ data = {
     ],
 }
 
-max_gradient = 0.4
-t = generate_mesh(data, max_gradient)
+mesh = generate_mesh(data, max_gradient=0.4)
+space = H1Space(mesh, 9)
 
 
-space = H1Space(t, 9)
-
-safety = 0.01
-
-
-def u_bound(x, y):
-    if type(x) == np.float64:
+def u_bound(x: NDArray[np.floating] | np.floating, y: NDArray[np.floating] | np.floating) -> NDArray[np.floating]:
+    safety = 0.01
+    if isinstance(x, np.floating):
         x = np.array([x])
         y = np.array([y])
     vals = np.zeros(x.shape)
-    for i, point in enumerate(zip(x, y)):
+    for i, point in enumerate(zip(x.flatten(), y.flatten())):
         if np.abs(point[0] - center_x[0]) < width / 2 + safety and np.abs(point[1] - center_y[0]) < height / 2 + safety:
             vals[i] = -100
         elif np.abs(point[0] - center_x[1]) < width / 2 + safety and np.abs(point[1] - center_y[1]) < height / 2 + safety:
@@ -116,10 +114,9 @@ def u_bound(x, y):
 
 
 u1, mass1, f_vector1 = solve_bvp(0, 1, space, u_bound, lambda x, y: np.zeros(x.shape))
-ax, mini, maxi = show_grid_function(u1, space, vrange=[-100, 100], dx=0.05, dy=0.05)
-ax.set_zlim([-100, 100])
-ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=[-100, 100], dx=0.1, dy=0.1)
-ax_x.set_zlim([-500, 500])
-ax_y.set_zlim([-500, 500])
-ax, maxi, mini = show_gradient_as_quiver(u1, space, dx=0.2, dy=0.2)
-plt.show()
+ax, mini, maxi = show_grid_function(u1, space, vrange=(-100, 100), dx=0.05, dy=0.05)
+ax.set_zlim([-100, 100])  # type:ignore
+ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=(-100, 100), dx=0.1, dy=0.1)
+ax_x.set_zlim([-500, 500])  # type:ignore
+ax_y.set_zlim([-500, 500])  # type:ignore
+plt.show()  # type:ignore

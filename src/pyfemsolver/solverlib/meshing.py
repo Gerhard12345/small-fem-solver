@@ -241,7 +241,7 @@ def refine_triangulation(points, regions, lines, max_gradient):
     return points, simplices
 
 
-def generate_mesh(data, max_gradient=0.05):
+def generate_mesh(data, max_gradient=0.05) -> Triangulation:
     # Generate line points
     points_from_lines, is_inner_point_lines = generate_points_on_lines(data["lines"])
     # Generate inner points for each region individually
