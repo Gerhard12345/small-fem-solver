@@ -45,12 +45,13 @@ def show_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
     return ax, min_val, max_val
 
 
-def show_shape(dof, tri: Triangulation, space: H1Space, vrange=[0, 2]):
+def show_shape(dof, space: H1Space, vrange=[0, 2], dx=0.3, dy=0.3):
     u = np.zeros((space.ndof, 1))
     u[dof, 0] = 1
-    ax, mini, maxi = show_grid_function(u, tri, space, vrange)
+    ax, mini, maxi = show_grid_function(u, space, vrange, dx, dy)
     print(f"Minimum value of shape function = {mini}, maximum value of shape function = {maxi}")
     ax.set_title(f"dof = {dof}")
+    return ax, mini, maxi
 
 
 def show_edge_shape(trig, space: H1Space):
