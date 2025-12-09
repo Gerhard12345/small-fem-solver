@@ -427,7 +427,7 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
     for _ in range(num_iterations):
         points2 = iterate_mesh_optimization(points2, simplices2, geometry, is_inner_point, step_size=0.1)
 
-    edges = list(set([(int(a), int(b)) if a < b else (int(b), int(a)) for edge in simplices2 for a, b in zip(edge, np.roll(edge, -1))]))
+    edges = list({(int(a), int(b)) if a < b else (int(b), int(a)) for edge in simplices2 for a, b in zip(edge, np.roll(edge, -1))})
 
     is_boundary_edge = [False] * len(edges)
     for i, edge in enumerate(edges):

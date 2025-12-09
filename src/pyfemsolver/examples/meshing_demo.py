@@ -51,7 +51,7 @@ if __name__ == "__main__":
     # Create Delaunay triangulation
     points, valid_triangles = create_delaunay_triangulation(all_points, geometry)
     # Perform iterative optimization restricted to inner points
-    num_iterations = 15
+    num_iterations = 15  # pylint:disable=C0103
     for _ in range(num_iterations):
         points = iterate_mesh_optimization(points, valid_triangles, geometry, is_inner_point)
     plt.figure()  # type:ignore
@@ -81,11 +81,11 @@ if __name__ == "__main__":
     ax.set_title("3D Surface Plot of Mesh Size Function")  # type:ignore
     points2, simplices2 = refine_triangulation(points, geometry, max_gradient)
     is_inner_point = [False] * len(points_from_lines) + [True] * (len(points2) - len(points_from_lines))
-    num_iterations = 5
+    num_iterations = 5  # pylint:disable=C0103
     for _ in range(num_iterations):
         points2 = iterate_mesh_optimization(points2, simplices2, geometry, is_inner_point, step_size=0.1)
 
-    edges = list(set([(int(a), int(b)) if a < b else (int(b), int(a)) for edge in simplices2 for a, b in zip(edge, np.roll(edge, -1))]))
+    edges = list({(int(a), int(b)) if a < b else (int(b), int(a)) for edge in simplices2 for a, b in zip(edge, np.roll(edge, -1))})
 
     is_boundary_edge = [False] * len(edges)
     for i, edge in enumerate(edges):

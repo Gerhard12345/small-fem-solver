@@ -1,4 +1,7 @@
-"""Example solving Laplacian BVP with sinusoidal source term and homogeneous boundary conditions. Can be used to compute an approximation error."""
+"""
+Example solving Laplacian BVP with sinusoidal source term and homogeneous boundary conditions.
+Can be used to compute an approximation error.
+"""
 
 from typing import List
 import matplotlib.pyplot as plt

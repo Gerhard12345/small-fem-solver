@@ -109,7 +109,7 @@ mesh = generate_mesh(geometry, max_gradient=0.07)
 space = H1Space(mesh, 3)
 
 
-def u_bound(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
+def u_bound(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     safety = 0.01
     if isinstance(x, np.floating):
         x = np.array([x])
