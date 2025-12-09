@@ -1,7 +1,7 @@
 import matplotlib.pyplot as plt
 import numpy as np
 from pyfemsolver.solverlib.space import H1Space
-from pyfemsolver.visual.visual import show_shape
+from pyfemsolver.visual.visual import show_shape, show_edge_shape
 from pyfemsolver.solverlib.meshing import generate_mesh
 
 
@@ -35,5 +35,6 @@ safety = 0.01
 u = np.zeros((space.ndof, 1))
 dof = 3
 ax, mini, maxi = show_shape(dof, space, vrange=[0, 1], dx=0.2, dy=0.2)
-ax.set_zlim([-10.8, 10.8])
+show_edge_shape(15, space)
+ax.set_zlim([0, 1])
 plt.show()

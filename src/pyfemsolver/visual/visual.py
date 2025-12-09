@@ -12,7 +12,7 @@ def show_grid_function(u, space: H1Space, vrange, dx=0.01, dy=0.01):
     x_coords = [point.coordinates[0] for point in space.tri.points]
     y_coords = [point.coordinates[1] for point in space.tri.points]
     ax.triplot(x_coords, y_coords, trigs)
-    # ax.plot(tri.points[:, 0], tri.points[:, 1], "o")
+    ax.plot(x_coords, y_coords, "o")
     min_val = 1e16
     max_val = -1e16
     for i, trig in enumerate(space.tri.trigs):
@@ -54,25 +54,32 @@ def show_shape(dof, space: H1Space, vrange=[0, 2], dx=0.3, dy=0.3):
     return ax, mini, maxi
 
 
-def show_edge_shape(trig, space: H1Space):
+def show_edge_shape(trig_nr: int, space: H1Space, ax: plt.Axes = None):
     t = np.arange(-1, 1.025, 0.025)
     t.shape = (t.shape[0], 1)
     x, y = barycentric_coordinates_line(t)
-    fig = plt.figure()
-    for i, edge in enumerate(space.trig_edges[trig]):
-        ax = fig.add_subplot(1, 3, i + 1, projection="3d")
-        shape = space.elements[trig].edge_shape_functions(t.flatten())
-        print("edge ", i, "is_flipped: ", space.elements[trig].flipped_edge[i])
-        print(edge in space.boundary_edges)
-        xy = space.tri.points[space.tri.edges[edge][0], :] * x + space.tri.points[space.tri.edges[edge][1], :] * y
+    use_new_axes = False
+    if not ax:
+        use_new_axes = True
+        fig = plt.figure()
+    trig = space.tri.trigs[trig_nr]
+    for i, edge_nr in enumerate(trig.edges):
+        if use_new_axes:
+            ax = fig.add_subplot(1, 3, i + 1, projection="3d")
+        shape = space.elements[trig_nr].edge_shape_functions(t.flatten())
+        edge = space.tri.edges[edge_nr]
+        edge.points
+        xy = space.tri.points[edge.points[0]].coordinates * x + space.tri.points[edge.points[1]].coordinates * y
         for j in shape:
             ax.plot(xy[:, 0], xy[:, 1], j)
-        ax.legend(space.edge_dofs[trig][i])
-        ax.triplot(space.tri.points[:, 0], space.tri.points[:, 1], space.tri.simplices)
-        ax.plot(space.tri.points[:, 0], space.tri.points[:, 1], "o")
+        trigs = [trig.points for trig in space.tri.trigs]
+        x_coords = [point.coordinates[0] for point in space.tri.points]
+        y_coords = [point.coordinates[1] for point in space.tri.points]
+        ax.triplot(x_coords, y_coords, trigs)
+        ax.plot(x_coords, y_coords, "o")
 
 
-def show_boundary_function(g, tri: Triangulation, ax):
+def show_boundary_function(g, tri: Triangulation, ax: plt.Axes):
     t = np.arange(-1, 1.025, 0.025)
     t.shape = (t.shape[0], 1)
     x, y = barycentric_coordinates_line(t)
