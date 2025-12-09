@@ -13,18 +13,32 @@ from .geometry import Geometry, Line, Region
 
 @dataclass
 class Point:
+    """
+    Class representing a point in the mesh via its coordiantes.
+    Provides an indicator if the point is a boundary point.
+    """
+
     coordinates: NDArray[np.float64]
     is_boundary_point: bool
 
 
 @dataclass
 class Triangle:
+    """
+    Represents a triangle element in the mesh via its point and edge indices.
+    """
+
     points: Tuple[int, int, int]
     edges: Tuple[int, int, int]
 
 
 @dataclass
 class Edge:
+    """
+    Represents an edge in the mesh via its point indices and neighbouring elements.
+    Provides indicators for boundary edges.
+    """
+
     points: Tuple[int, int]
     neighbouring_elements: List[int]
     is_boundary_edge: bool
@@ -33,6 +47,10 @@ class Edge:
 
 @dataclass
 class Triangulation:
+    """
+    The triangulation data structure containing points, edges, triangles, and boundary information.
+    """
+
     points: List[Point]
     boundary_points: List[Point]
     edges: List[Edge]
@@ -41,6 +59,16 @@ class Triangulation:
 
 
 def generate_points_on_lines(geometry: Geometry, tolerance: float = 1e-6) -> Tuple[List[Tuple[float, float]], List[bool]]:
+    """
+    Generate points along the lines of the geometry with specified mesh sizes. Also generates an indicator list for inner points.
+
+    :param geometry: Geometry object containing lines and regions.
+    :type geometry: Geometry
+    :param tolerance: Tolerance for point uniqueness, defaults to 1e-6
+    :type tolerance: float, optional
+    :return: Tuple containing list of points and corresponding inner point indicators.
+    :rtype: Tuple[List[Tuple[float, float]], List[bool]]
+    """
     points: List[NDArray[np.floating]] = []
     is_inner_point: List[bool] = []
     for line in geometry.lines:
@@ -52,18 +80,18 @@ def generate_points_on_lines(geometry: Geometry, tolerance: float = 1e-6) -> Tup
         points.extend(line_points)
         local_is_inner_points = [line.left_region != 0 and line.right_region != 0] * len(line_points)
         is_inner_point.extend(local_is_inner_points)
-    # Remove duplicates within a numerical tolerance. group points according to equivalence classes within rounding tolerance.
-    # Store for each group all potential different values for "is_boundary". This can arise from a point being in multiple lines, forming a t crossing:
-    # ------------------P--------------------
-    #     l_1           |      l_2
-    #                   |
-    #                   |
-    #                   |
-    #                   |  l_3
-    #                   |
-    #
-    # P has 3 different is_inner_point indicators. for l_1 and l_2 it is said to be a boundary point, for line l_3 it is an inner point (since the line is an inner line).
-    # If P is in at least one outside line, then it is said to be an outside point.
+        # Remove duplicates within a numerical tolerance. group points according to equivalence classes within rounding tolerance.
+        # Store for each group all potential different values for "is_boundary". This can arise from a point being in multiple lines, forming a t crossing:
+        # ------------------P--------------------
+        #     l_1           |      l_2
+        #                   |
+        #                   |
+        #                   |
+        #                   |  l_3
+        #                   |
+        #
+        # P has 3 different is_inner_point indicators. for l_1 and l_2 it is said to be a boundary point, for line l_3 it is an inner point (since the line is an inner line).
+        # If P is in at least one outside line, then it is said to be an outside point.
     groups: Dict[Tuple[float, float], List[bool]] = {}
     for el, is_local_inner_point in zip(points, is_inner_point):
         if tuple(np.round(el, decimals=int(-np.log10(tolerance)))) in groups:
@@ -74,7 +102,19 @@ def generate_points_on_lines(geometry: Geometry, tolerance: float = 1e-6) -> Tup
     return list(groups.keys()), reduced_is_inner_point
 
 
-def is_point_on_line_segment(point: Tuple[float, float], line: Line, tolerance: float = 1e-6):
+def is_point_on_line_segment(point: Tuple[float, float], line: Line, tolerance: float = 1e-6) -> bool:
+    """
+    Verifes if a point lies on a given line segment within a specified tolerance.
+
+    :param point: Coordinates of the point to check.
+    :type point: Tuple[float, float]
+    :param line: Line segment to check against.
+    :type line: Line
+    :param tolerance: Tolerance for point-line distance, defaults to 1e-6
+    :type tolerance: float, optional
+    :return: True if the point lies on the line segment within the tolerance, False otherwise.
+    :rtype: bool
+    """
     # Check if a point lies on the line segment within a given tolerance
     line_vec = np.array(line.end) - np.array(line.start)
     point_vec = np.array(point) - np.array(line.start)
@@ -83,10 +123,22 @@ def is_point_on_line_segment(point: Tuple[float, float], line: Line, tolerance: 
     closest_point_on_line = np.array(line.start) + line_vec * projection / line_length
     dist_to_line = np.linalg.norm(point - closest_point_on_line)
 
-    return dist_to_line <= tolerance and -tolerance <= projection <= line_length + tolerance
+    return dist_to_line <= tolerance and -tolerance <= projection <= line_length + tolerance  # type:ignore
 
 
-def generate_inner_points(region: Region, lines: List[Line], tolerance: float = 1e-6):
+def generate_inner_points(region: Region, lines: List[Line], tolerance: float = 1e-6) -> List[Tuple[float, float]]:
+    """
+    Generate inner points for a given region based on its mesh size. Does not place points on the boundary lines of the region.
+
+    :param region: Region object defining the area for point generation.
+    :type region: Region
+    :param lines: List of Line objects defining the boundaries of the region.
+    :type lines: List[Line]
+    :param tolerance: Tolerance for point-line distance, defaults to 1e-6
+    :type tolerance: float, optional
+    :return: List of tuples representing the coordinates of the generated inner points.
+    :rtype: List[Tuple[float, float]]
+    """
     points: List[Tuple[float, float]] = []
     region_id = region.region_id
     mesh_size = region.mesh_inner
@@ -119,6 +171,17 @@ def generate_inner_points(region: Region, lines: List[Line], tolerance: float = 
 
 
 def create_delaunay_triangulation(points: NDArray[np.floating], geometry: Geometry) -> Tuple[NDArray[np.floating], List[List[int]]]:
+    """
+    Creates a Delaunay triangulation from given points and filters triangles based on the geometry regions, i.e.
+    only keeping triangles whose centroids lie within the geometry.
+
+    :param points: Array of points to triangulate.
+    :type points: NDArray[np.floating]
+    :param geometry: Geometry object defining regions for filtering triangles.
+    :type geometry: Geometry
+    :return: Tuple containing the array of points and a list of valid triangles (as lists of point indices).
+    :rtype: Tuple[NDArray[np.floating], List[List[int]]]
+    """
     delaunay = Delaunay(points)
     valid_triangles: List[List[int]] = []
 
@@ -133,7 +196,18 @@ def create_delaunay_triangulation(points: NDArray[np.floating], geometry: Geomet
 
 
 def point_in_region(point: Tuple[float, float], lines: List[Line], region_id: int) -> bool:
-    """Determine if a point is within a specific region using line information."""
+    """
+    Determine if a point is within a specific region using line information.
+
+    :param point: Coordinates of the point to check.
+    :type point: Tuple[float, float]
+    :param lines: List of Line objects defining the boundaries of the regions.
+    :type lines: List[Line]
+    :param region_id: ID of the region to check against.
+    :type region_id: int
+    :return: True if the point is within the specified region, False otherwise.
+    :rtype: bool
+    """
     x, y = point
     crossings = 0
     for line in lines:
@@ -150,6 +224,16 @@ def point_in_region(point: Tuple[float, float], lines: List[Line], region_id: in
 
 
 def get_region_for_centroid(centroid: Tuple[float, float], geometry: Geometry) -> int:
+    """
+    Determine the region ID for a given centroid based on the geometry.
+
+    :param centroid: Coordinates of the centroid.
+    :type centroid: Tuple[float, float]
+    :param geometry: Geometry object containing regions and lines.
+    :type geometry: Geometry
+    :return: Region ID where the centroid is located, or 0 if outside all regions.
+    :rtype: int
+    """
     for region in geometry.regions:
         if point_in_region(centroid, geometry.lines, region.region_id):
             return region.region_id
@@ -157,7 +241,16 @@ def get_region_for_centroid(centroid: Tuple[float, float], geometry: Geometry) -
 
 
 def side_length_gradient(points: NDArray[np.floating], simplices: List[List[int]]) -> NDArray[np.floating]:
-    """Calculate the gradient based on deviation of triangle side lengths."""
+    """
+    Calculate the gradient based on deviation of triangle side lengths.
+
+    :param points: Array of point coordinates.
+    :type points: NDArray[np.floating]
+    :param simplices: List of triangles defined by point indices.
+    :type simplices: List[List[int]]
+    :return: Gradient array based on side length deviations.
+    :rtype: NDArray[np.floating]
+    """
     points = points.reshape(-1, 2)
     gradients = np.zeros_like(points)
 
@@ -177,7 +270,22 @@ def side_length_gradient(points: NDArray[np.floating], simplices: List[List[int]
 def iterate_mesh_optimization(
     points: NDArray[np.floating], simplices: List[List[int]], geometry: Geometry, inner_point_indicator: List[bool], step_size: float = 0.1
 ) -> NDArray[np.floating]:
-    """Performs a single iteration of mesh point optimization based on side lengths with constraints."""
+    """
+    Performs a single iteration of mesh point optimization based on side lengths with constraints.
+
+    :param points: Array of point coordinates.
+    :type points: NDArray[np.floating]
+    :param simplices: List of triangles defined by point indices.
+    :type simplices: List[List[int]]
+    :param geometry: Geometry object containing regions and lines.
+    :type geometry: Geometry
+    :param inner_point_indicator: List indicating which points are inner points.
+    :type inner_point_indicator: List[bool]
+    :param step_size: Step size for the optimization, defaults to 0.1
+    :type step_size: float, optional
+    :return: Updated array of point coordinates after optimization.
+    :rtype: NDArray[np.floating]
+    """
     points_flattened = points.flatten()
     gradient = side_length_gradient(points_flattened, simplices)
     gradient = gradient.reshape(-1, 2)
@@ -192,6 +300,16 @@ def iterate_mesh_optimization(
 
 
 def point_to_line_distance(point: Tuple[float, float], line: Line) -> float:
+    """
+    Calculate the shortest distance from a point to a line segment.
+
+    :param point: Coordinates of the point.
+    :type point: Tuple[float, float]
+    :param line: Line segment to calculate distance to.
+    :type line: Line
+    :return: Shortest distance from the point to the line segment.
+    :rtype: float
+    """
     line_vec = np.array(line.end) - np.array(line.start)
     point_vec = np.array(point) - np.array(line.start)
     line_len = np.linalg.norm(line_vec)
@@ -205,6 +323,18 @@ def point_to_line_distance(point: Tuple[float, float], line: Line) -> float:
 
 
 def get_restricted_mesh_size(point: Tuple[float, float], geometry: Geometry, max_gradient: float) -> float:
+    """
+    Calculate the restricted mesh size at a given point based on its distance to the nearest boundary line and the maximum mesh sizegradient.
+
+    :param point: Coordinates of the point.
+    :type point: Tuple[float, float]
+    :param geometry: Geometry object containing regions and lines.
+    :type geometry: Geometry
+    :param max_gradient: Maximum allowed gradient for mesh size changes.
+    :type max_gradient: float
+    :return: Calculated mesh size at the point.
+    :rtype: float
+    """
     region_id = get_region_for_centroid(point, geometry)
     if region_id == 0:
         return 0.001
@@ -229,6 +359,18 @@ def get_restricted_mesh_size(point: Tuple[float, float], geometry: Geometry, max
 
 
 def refine_triangulation(points: NDArray[np.floating], geometry: Geometry, max_gradient: float) -> Tuple[NDArray[np.floating], List[List[int]]]:
+    """
+    Refine triangulation based on mesh size restrictions.
+
+    :param points: Array of point coordinates.
+    :type points: NDArray[np.floating]
+    :param geometry: Geometry object containing regions and lines.
+    :type geometry: Geometry
+    :param max_gradient: Maximum allowed gradient for mesh size changes.
+    :type max_gradient: float
+    :return: Tuple containing the refined array of point coordinates and a list of valid triangles (as lists of point indices).
+    :rtype: Tuple[NDArray[np.floating], List[List[int]]]
+    """
     points, simplices = create_delaunay_triangulation(points, geometry)
     max_iterations = 5
     iteration = 0
@@ -250,6 +392,18 @@ def refine_triangulation(points: NDArray[np.floating], geometry: Geometry, max_g
 
 
 def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulation:
+    """
+    Compute a triangular mesh based on the provided geometry and maximum mesh size gradient.
+    Generates points on lines and within regions, creates a Delaunay triangulation, and optimizes the mesh.
+    Refines the triangulation based on mesh size restrictions and optimizes again.
+
+    :param geometry: Geometry object defining the area to mesh.
+    :type geometry: Geometry
+    :param max_gradient: Maximum allowed gradient for mesh size changes, defaults to 0.05
+    :type max_gradient: float, optional
+    :return: Triangulation object containing points, edges, triangles, and boundary information.
+    :rtype: Triangulation
+    """
     # Generate line points
     points_from_lines, is_inner_point_lines = generate_points_on_lines(geometry)
     # Generate inner points for each region individually
