@@ -8,7 +8,7 @@ import numpy as np
 from numpy.typing import NDArray
 from copy import copy
 from typing import Tuple, List, Callable
-from pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig, ElementTransformationLine
+from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 
 def jacobi_polynomial(n: int, x: NDArray[np.float64], alpha: float | int) -> NDArray[np.float64]:
     """
@@ -273,19 +273,17 @@ class H1Fel:
         nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
         return nodes, weights
 
-    def calc_mass_matrix(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_mass_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.float64]:
         """
-        Computes the mass matrix for the element defined by the given points.
-        Points are given row-wise.
+        Computes the mass matrix for the element defined by the given transformation.
 
         :param self: The H1 finite element instance
         :type self: H1Fel
-        :param points: The coordinates of the element's corners
-        :type points: NDArray[np.float64]
+        :param eltrans: The element transformation for the triangle
+        :type eltrans: ElementTransformationTrig
         :return: The mass matrix of the element
         :rtype: NDArray[float64]
         """
-        eltrans = ElementTransformationTrig(points)
         X, Y, omega = self.get_integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
@@ -293,20 +291,18 @@ class H1Fel:
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
-    def calc_gradu_gradv_matrix(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_gradu_gradv_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.float64]:
         """
         Computes the stiffness matrix (grad u, grad v) for the
-        element defined by the given points.
-        Points are given row-wise.
+        element defined by the given transformation.
 
         :param self: The H1 finite element instance
         :type self: H1Fel
-        :param points: The coordinates of the element's corners
-        :type points: NDArray[np.float64]
+        :param eltrans: The element transformation for the triangle
+        :type eltrans: ElementTransformationTrig
         :return: The stiffness matrix of the element
         :rtype: NDArray[float64]
         """
-        eltrans = ElementTransformationTrig(points)
         X, Y, omega = self.get_integration_rule_trig(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         omegas_2 = np.zeros((2 * omega.shape[0],))
@@ -315,9 +311,8 @@ class H1Fel:
         dshape = self.dshape_functions(X, Y)
         Jinv = eltrans.get_jacobian_inverse()
         for i in range(self.ndof):
-            temp = np.matrix(dshape[i, :].copy())
+            temp = dshape[i, :].copy()
             temp.shape = (2, len(omega))
-            temp = np.matrix(temp)
             temp2 = Jinv @ temp
             temp2.shape = (1, len(omegas_2))
             dshape[i, :] = temp2
@@ -326,48 +321,45 @@ class H1Fel:
         return gradu_gradv
 
     def calc_element_vector(
-        self, points: NDArray[np.float64], f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        self, eltrans: ElementTransformationTrig, f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
     ) -> NDArray[np.float64]:
         """
-        Computes the element vector for the element defined by the given points
+        Computes the element vector for the element defined by the given transformation
         and the function f.
 
         :param self: The H1 finite element instance
         :type self: H1Fel
-        :param points: The coordinates of the element's corners
-        :type points: NDArray[np.float64]
+        :param eltrans: The element transformation for the triangle
+        :type eltrans: ElementTransformationTrig
         :param f: The function to be integrated over the element
         :type f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
         :return: The element vector for the element and function f.
         :rtype: NDArray[float64]
         """
-        eltrans = ElementTransformationTrig(points)
         X, Y, omega = self.get_integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         X.shape = (X.shape[0], 1)
         Y.shape = (Y.shape[0], 1)
         x, y, z = barycentric_coordinates(X, Y)
-        XY_phys = points[0, :] * x + points[1, :] * y + points[2, :] * z
+        XY_phys = eltrans.points[0, :] * x + eltrans.points[1, :] * y + eltrans.points[2, :] * z
         f_vals = f(XY_phys[:, 0], XY_phys[:, 1])
         f_vals.shape = (f_vals.shape[0], 1)
         element_vector = (shape * omega) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
 
-    def calc_edge_mass_matrix(self, points: NDArray[np.float64]) -> NDArray[np.float64]:
+    def calc_edge_mass_matrix(self, eltrans: ElementTransformationLine) -> NDArray[np.float64]:
         """
-        Copmutes the mass matrix for an edge defined by the given points.
-        Points are given row-wise.
+        Computes the mass matrix for an edge defined by the given transformation.
 
         :param self: The H1 finite element instance
         :type self: H1Fel
-        :param points: The coordinates of the edge's corners
-        :type points: NDArray[np.float64]
+        :param eltrans: The element transformation for the line
+        :type eltrans: ElementTransformationLine
         :return: The mass matrix for the edge.
         :rtype: NDArray[float64]
         """
-        eltrans = ElementTransformationLine(points)
         X, omega = self.get_integration_rule_line(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
@@ -376,26 +368,25 @@ class H1Fel:
         return mass
 
     def calc_edge_element_vector(
-        self, points: NDArray[np.float64], f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
+        self, eltrans: ElementTransformationLine, f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
     ) -> NDArray[np.float64]:
         """
-        Computes the element vector for an edge defined by the given points
+        Computes the element vector for an edge defined by the given transformation
         and the function f.
 
         :param self: The H1 finite element instance
         :type self: H1Fel
-        :param points: The coordinates of the edge's corners
-        :type points: NDArray[np.float64]
+        :param eltrans: The element transformation for the line
+        :type eltrans: ElementTransformationLine
         :param f: The function to be integrated over the edge
         :type f: Callable[[NDArray[np.float64], NDArray[np.float64]], NDArray[np.float64]]
         :return: The element vector for the edge and function f.
         :rtype: NDArray[float64]
         """
-        eltrans = ElementTransformationLine(points)
         X, omega = self.get_integration_rule_line(self.p)
         X.shape = (X.shape[0], 1)
         x, y = barycentric_coordinates_line(X)
-        XY_phys = points[0, :] * x + points[1, :] * y
+        XY_phys = eltrans.points[0, :] * x + eltrans.points[1, :] * y
         f_vals = f(XY_phys[:, 0], XY_phys[:, 1])
         f_vals.shape = (f_vals.shape[0], 1)
         omega *= eltrans.getjacobian_determinant()

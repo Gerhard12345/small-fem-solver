@@ -8,6 +8,7 @@ from src.pyfemsolver.solverlib.element import (
     integrated_jacobi_polynomial,
     duffy,
 )
+from src.pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig, ElementTransformationLine
 
 
 class TestElement:
@@ -132,7 +133,8 @@ class TestElement:
         """
         fel = H1Fel(order=2)
         points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        mass = fel.calc_mass_matrix(points)
+        eltrans = ElementTransformationTrig(points)
+        mass = fel.calc_mass_matrix(eltrans)
         assert np.allclose(mass, mass.T)
         assert np.all(np.diag(mass) >= 0)
 
@@ -143,7 +145,8 @@ class TestElement:
         """
         fel = H1Fel(order=2)
         points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        stiff = fel.calc_gradu_gradv_matrix(points)
+        eltrans = ElementTransformationTrig(points)
+        stiff = fel.calc_gradu_gradv_matrix(eltrans)
         assert np.allclose(stiff, stiff.T)
 
     def test_calc_element_vector(self):
@@ -154,8 +157,9 @@ class TestElement:
         """
         fel = H1Fel(order=2)
         points = np.array([[-1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
+        eltrans = ElementTransformationTrig(points)
         f_const = lambda x, y: np.ones_like(x)
-        elem_vec = fel.calc_element_vector(points, f_const)
+        elem_vec = fel.calc_element_vector(eltrans, f_const)
         for i in range(3):
             assert np.allclose(elem_vec[i].sum(), 1.0 / 3.0, atol=1e-6)
         for i in range(3, 6):
@@ -169,7 +173,8 @@ class TestElement:
         """
         fel = H1Fel(order=2)
         edge_pts = np.array([[-1.0, -1.0], [1.0, -1.0]])
-        edge_mass = fel.calc_edge_mass_matrix(edge_pts)
+        eltrans = ElementTransformationLine(edge_pts)
+        edge_mass = fel.calc_edge_mass_matrix(eltrans)
         assert np.allclose(edge_mass, edge_mass.T)
 
     def test_calc_edge_element_vector(self):
@@ -180,7 +185,8 @@ class TestElement:
         """
         fel = H1Fel(order=2)
         edge_pts = np.array([[-1.0, 0.0], [1.0, 0.0]])
-        edge_vec = fel.calc_edge_element_vector(edge_pts, lambda x, y: np.ones_like(x))
+        eltrans = ElementTransformationLine(edge_pts)
+        edge_vec = fel.calc_edge_element_vector(eltrans, lambda x, y: np.ones_like(x))
         for i in range(2):
             assert np.allclose(edge_vec[i].sum(), 1.0, atol=1e-6)
         assert np.allclose(edge_vec[2].sum(), -2.0 / 3.0, atol=1e-6)

@@ -1,7 +1,8 @@
 import numpy as np
-from pyfemsolver.solverlib.element import H1Fel
+from .element import H1Fel
+from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from typing import List
-from pyfemsolver.solverlib.meshing import Triangulation
+from .meshing import Triangulation
 
 
 class H1Space:
@@ -85,7 +86,8 @@ class H1Space:
         for i, trig in enumerate(self.tri.trigs):
             print(f"Mass matrix, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
-            element_matrix = self.elements[i].calc_mass_matrix(trig_coords)
+            eltrans = ElementTransformationTrig(trig_coords)
+            element_matrix = self.elements[i].calc_mass_matrix(eltrans)
             self.local_to_global(element_matrix, global_mass, i)
         print()
 
@@ -93,7 +95,8 @@ class H1Space:
         for i, trig in enumerate(self.tri.trigs):
             print(f"Stiffness, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
-            element_matrix = self.elements[i].calc_gradu_gradv_matrix(trig_coords)
+            eltrans = ElementTransformationTrig(trig_coords)
+            element_matrix = self.elements[i].calc_gradu_gradv_matrix(eltrans)
             self.local_to_global(element_matrix, global_gradu_gradv, i)
         print()
 
@@ -101,7 +104,8 @@ class H1Space:
         for i, trig in enumerate(self.tri.trigs):
             print(f"Load vector, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
-            element_vector = self.elements[i].calc_element_vector(trig_coords, f)
+            eltrans = ElementTransformationTrig(trig_coords)
+            element_vector = self.elements[i].calc_element_vector(eltrans, f)
             self.local_to_global_vector(element_vector, global_vector, i)
         print()
 
@@ -109,7 +113,8 @@ class H1Space:
         for i, edge in enumerate(self.tri.boundary_edges):
             print(f"Boundary mass, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])
-            element_matrix = self.elements[i].calc_edge_mass_matrix(edge_coords)
+            eltrans = ElementTransformationLine(edge_coords)
+            element_matrix = self.elements[i].calc_edge_mass_matrix(eltrans)
             self.local_to_global_boundary(element_matrix, global_boundary_mass, i)
         print()
 
@@ -117,6 +122,7 @@ class H1Space:
         for i, edge in enumerate(self.tri.boundary_edges):
             print(f"Boundary load vector, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])
-            element_vector = self.elements[i].calc_edge_element_vector(edge_coords, f)
+            eltrans = ElementTransformationLine(edge_coords)
+            element_vector = self.elements[i].calc_edge_element_vector(eltrans, f)
             self.local_to_global_boundary_vector(element_vector, global_boundary_vector, i)
         print()
