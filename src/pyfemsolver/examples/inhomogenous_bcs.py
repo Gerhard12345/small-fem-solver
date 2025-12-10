@@ -26,9 +26,9 @@ domain_mesh_sizes = [0.4, 0.5]
 for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, domain_mesh_sizes):
     lines: List[Line] = []
     lines.append(Line(start=(-1, -1), end=(1, -1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
-    lines.append(Line(start=(1, -1), end=(1, 1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
-    lines.append(Line(start=(1, 1), end=(-1, 1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
-    lines.append(Line(start=(-1, 1), end=(-1, -1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=2))
+    lines.append(Line(start=(1, -1), end=(1, 1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=2))
+    lines.append(Line(start=(1, 1), end=(-1, 1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=3))
+    lines.append(Line(start=(-1, 1), end=(-1, -1), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=4))
     regions: List[Region] = []
     regions.append(Region(region_id=1, mesh_inner=domain_mesh_size))
     geometry = Geometry(lines=lines, regions=regions)

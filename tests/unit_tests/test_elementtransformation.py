@@ -20,8 +20,9 @@ class TestElementTransformationBase:
         Then: points are stored
         """
         points = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
-        et = ElementTransformation(points)
+        et = ElementTransformation(points, region_index=1)
         assert np.allclose(et.points, points)
+        assert et.region_index == 1
 
     def test_get_jacobian_determinant(self):
         """Given: an element transformation with Jacobian
@@ -29,7 +30,7 @@ class TestElementTransformationBase:
         Then: returns absolute value of determinant
         """
         points = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
-        et = ElementTransformation(points)
+        et = ElementTransformation(points, region_index=5)
         et.J = np.array([[1.0, 0.0], [0.0, 2.0]])
 
         det = et.getjacobian_determinant()
@@ -41,7 +42,7 @@ class TestElementTransformationBase:
         Then: returns inverse of Jacobian
         """
         points = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
-        et = ElementTransformation(points)
+        et = ElementTransformation(points, region_index=6)
         et.J = np.array([[2.0, 0.0], [0.0, 3.0]])
 
         J_inv = et.get_jacobian_inverse()
@@ -58,7 +59,7 @@ class TestElementTransformationTrig:
         Then: Jacobian is correctly computed
         """
         points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
+        eltrans = ElementTransformationTrig(points, region_index=2)
 
         assert eltrans.J.shape == (2, 2)
         assert np.allclose(eltrans.J[0, :], 0.5 * (points[1, :] - points[0, :]))
@@ -70,7 +71,7 @@ class TestElementTransformationTrig:
         Then: returns positive value
         """
         points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
+        eltrans = ElementTransformationTrig(points, region_index=2)
 
         det = eltrans.getjacobian_determinant()
         assert det > 0
@@ -81,7 +82,7 @@ class TestElementTransformationTrig:
         Then: returns barycentric combination of vertices
         """
         points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
+        eltrans = ElementTransformationTrig(points, region_index=2)
 
         x_phys, y_phys = eltrans.transform_points(np.array([0.0]), np.array([0.0]))
 
@@ -95,7 +96,7 @@ class TestElementTransformationTrig:
         Then: returns that vertex in physical space
         """
         points = np.array([[0.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
+        eltrans = ElementTransformationTrig(points, region_index=2)
 
         # Reference coords at vertex (-1, -1) should map to first physical vertex
         x_phys, y_phys = eltrans.transform_points(np.array([-1.0]), np.array([-1.0]))
@@ -109,7 +110,7 @@ class TestElementTransformationTrig:
         Then: returns transformed points with correct shape
         """
         points = np.array([[0.0, 0.0], [2.0, 0.0], [0.0, 2.0]])
-        eltrans = ElementTransformationTrig(points)
+        eltrans = ElementTransformationTrig(points, region_index=4)
 
         x_ref = np.array([-1.0, 0.0, 1.0])
         y_ref = np.array([-1.0, 0.0, 1.0])
@@ -129,7 +130,7 @@ class TestElementTransformationLine:
         Then: Jacobian is correctly computed
         """
         points = np.array([[-1.0, 0.0], [1.0, 0.0]])
-        eltrans = ElementTransformationLine(points)
+        eltrans = ElementTransformationLine(points, region_index=3)
 
         # Jacobian for a line is the half-length
         expected_J = np.linalg.norm(0.5 * points[1, :] - 0.5 * points[0, :])
@@ -141,7 +142,7 @@ class TestElementTransformationLine:
         Then: returns positive value
         """
         points = np.array([[-1.0, 0.0], [1.0, 0.0]])
-        eltrans = ElementTransformationLine(points)
+        eltrans = ElementTransformationLine(points, region_index=3)
 
         det = eltrans.getjacobian_determinant()
         assert det > 0
@@ -152,7 +153,7 @@ class TestElementTransformationLine:
         Then: returns barycentric combination of endpoints
         """
         points = np.array([[0.0, 0.0], [2.0, 0.0]])
-        eltrans = ElementTransformationLine(points)
+        eltrans = ElementTransformationLine(points, region_index=3)
 
         x_phys, y_phys = eltrans.transform_points(np.array([0.0]))
 
@@ -165,7 +166,7 @@ class TestElementTransformationLine:
         Then: returns left endpoint in physical space
         """
         points = np.array([[0.0, 0.0], [2.0, 0.0]])
-        eltrans = ElementTransformationLine(points)
+        eltrans = ElementTransformationLine(points, region_index=3)
 
         x_phys, y_phys = eltrans.transform_points(np.array([-1.0]))
 
@@ -178,7 +179,7 @@ class TestElementTransformationLine:
         Then: returns right endpoint in physical space
         """
         points = np.array([[0.0, 0.0], [2.0, 0.0]])
-        eltrans = ElementTransformationLine(points)
+        eltrans = ElementTransformationLine(points, region_index=2)
 
         x_phys, y_phys = eltrans.transform_points(np.array([1.0]))
 
@@ -191,7 +192,7 @@ class TestElementTransformationLine:
         Then: returns transformed points with correct shape
         """
         points = np.array([[0.0, 0.0], [4.0, 0.0]])
-        eltrans = ElementTransformationLine(points)
+        eltrans = ElementTransformationLine(points, region_index=3434)
 
         t_ref = np.array([-1.0, 0.0, 1.0])
         x_phys, y_phys = eltrans.transform_points(t_ref)

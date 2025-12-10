@@ -14,7 +14,7 @@ from .geometry import Geometry, Line, Region
 @dataclass
 class Point:
     """
-    Class representing a point in the mesh via its coordiantes.
+    Class representing a point in the mesh via its coordinates.
     Provides an indicator if the point is a boundary point.
     """
 
@@ -26,29 +26,35 @@ class Point:
 class Triangle:
     """
     Represents a triangle element in the mesh via its point and edge indices.
+    A region identifier provides information about the region, the triangle
+    belongs to.
     """
 
     points: Tuple[int, int, int]
     edges: Tuple[int, int, int]
+    region: int
 
 
 @dataclass
 class Edge:
     """
     Represents an edge in the mesh via its point indices and neighbouring elements.
-    Provides indicators for boundary edges.
+    Provides indicators for boundary edges. Region indicator provides information
+    about the boundary region the edge belongs to.
     """
 
     points: Tuple[int, int]
     neighbouring_elements: List[int]
     is_boundary_edge: bool
     global_edge_nr: int
+    region: int
 
 
 @dataclass
 class Triangulation:
     """
-    The triangulation data structure containing points, edges, triangles, and boundary information.
+    The triangulation data structure containing points, edges, triangles,
+    and boundary information.
     """
 
     points: List[Point]
@@ -172,7 +178,7 @@ def generate_inner_points(region: Region, lines: List[Line], tolerance: float = 
     return points
 
 
-def create_delaunay_triangulation(points: NDArray[np.floating], geometry: Geometry) -> Tuple[NDArray[np.floating], List[List[int]]]:
+def create_delaunay_triangulation(points: NDArray[np.floating], geometry: Geometry) -> Tuple[NDArray[np.floating], List[NDArray[np.integer]]]:
     """
     Creates a Delaunay triangulation from given points and filters triangles based on the geometry regions, i.e.
     only keeping triangles whose centroids lie within the geometry.
@@ -185,7 +191,7 @@ def create_delaunay_triangulation(points: NDArray[np.floating], geometry: Geomet
     :rtype: Tuple[NDArray[np.floating], List[List[int]]]
     """
     delaunay = Delaunay(points)
-    valid_triangles: List[List[int]] = []
+    valid_triangles: List[NDArray[np.integer]] = []
 
     for simplex in delaunay.simplices:
         centroid = np.mean(points[simplex], axis=0)
@@ -360,7 +366,9 @@ def get_restricted_mesh_size(point: Tuple[float, float], geometry: Geometry, max
     return mesh_size
 
 
-def refine_triangulation(points: NDArray[np.floating], geometry: Geometry, max_gradient: float) -> Tuple[NDArray[np.floating], List[List[int]]]:
+def refine_triangulation(
+    points: NDArray[np.floating], geometry: Geometry, max_gradient: float
+) -> Tuple[NDArray[np.floating], List[NDArray[np.integer]]]:
     """
     Refine triangulation based on mesh size restrictions.
 
@@ -445,6 +453,7 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
     edge_definitions: List[Edge] = [None] * len(edges)  # type:ignore
     trig_definitions: List[Triangle] = []
     found_edges: List[int] = []
+    j = 0
     for i, trig in enumerate(simplices2):
         # and map them to the global points
         trig_local_edges = [tuple(sorted((int(a), int(b)))) for a, b in zip(trig, np.roll(trig, -1))]
@@ -457,10 +466,22 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
                 first_neighbour = edge_definitions[edge_nr].neighbouring_elements[0]
                 edge_definitions[edge_nr].neighbouring_elements = [first_neighbour, i]
             else:
+                edge_center = np.mean(points2[np.array(edge), :], axis=0)
+                region = 0
+                for line in geometry.lines:
+                    if is_point_on_line_segment(tuple(edge_center), line):
+                        j += 1
+                        region = line.boundary_index
+                        break
                 found_edges.append(edge_nr)
-                edge_definitions[edge_nr] = Edge(edge, [i], is_boundary_edge=is_boundary_edge[edge_nr], global_edge_nr=edge_nr)  # type:ignore
+                edge_definitions[edge_nr] = Edge(
+                    edge, [i], is_boundary_edge=is_boundary_edge[edge_nr], global_edge_nr=edge_nr, region=region
+                )  # type:ignore
+        region = get_region_for_centroid(np.mean(points2[trig, :], axis=0), geometry)
         trig_definitions.append(
-            Triangle(points=tuple(trig.astype(int).tolist()), edges=tuple(edges.index(edge) for edge in trig_local_edges))  # type:ignore
+            Triangle(
+                points=tuple(trig.astype(int).tolist()), edges=tuple(edges.index(edge) for edge in trig_local_edges), region=region
+            )  # type:ignore
         )
 
     boundary_edges = [edge for edge in edge_definitions if edge.is_boundary_edge]
