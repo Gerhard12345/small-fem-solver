@@ -71,12 +71,13 @@ class TestIntegrationRuleTrig:
         rule = IntegrationRuleTrig()
         X, Y, omega = rule(1)
 
-        # Should have (2*1+1)**2 = 9 integration points
-        assert X.shape[0] == 9
-        assert Y.shape[0] == 9
-        assert omega.shape[0] == 9
+        # Should have 1**2 = 1 integration points
+        assert X.shape[0] == 1
+        assert Y.shape[0] == 1
+        assert omega.shape[0] == 1
 
-        # Weights should sum to approximately 2.0 (area of reference triangle)
+        # Weights should sum to approximately 2.0 (area of reference triangle with nodes (-1,-1), (1,-1), (0,1),
+        # i.e. \int_{T_\text{ref}} f(x) dx with f \equiv 1)
         assert np.allclose(omega.sum(), 2.0)
 
     def test_integration_rule_trig_order_2(self):
@@ -87,12 +88,13 @@ class TestIntegrationRuleTrig:
         rule = IntegrationRuleTrig()
         X, Y, omega = rule(2)
 
-        # Should have (2*2+1) = 25 integration points
-        assert X.shape[0] == 25
-        assert Y.shape[0] == 25
-        assert omega.shape[0] == 25
+        # Should have 2**2 = 4 integration points
+        assert X.shape[0] == 4
+        assert Y.shape[0] == 4
+        assert omega.shape[0] == 4
 
-        # Weights should sum to approximately 2.0
+        # Weights should sum to approximately 2.0 (area of reference triangle with nodes (-1,-1), (1,-1), (0,1),
+        # i.e. \int_{T_\text{ref}} f(x) dx with f \equiv 1)
         assert np.allclose(omega.sum(), 2.0)
 
     def test_integration_rule_trig_caching(self):
@@ -131,9 +133,9 @@ class TestIntegrationRuleTrig:
         X2, _, _ = rule(2)
         X3, _, _ = rule(3)
 
-        assert X1.shape[0] == 9
-        assert X2.shape[0] == 25
-        assert X3.shape[0] == 49
+        assert X1.shape[0] == 1
+        assert X2.shape[0] == 4
+        assert X3.shape[0] == 9
 
 
 class TestIntegrationRuleLine:
@@ -148,8 +150,8 @@ class TestIntegrationRuleLine:
         nodes, weights = rule(1)
 
         # Should have 2*1+1 = 3 integration points
-        assert nodes.shape[0] == 3
-        assert weights.shape[0] == 3
+        assert nodes.shape[0] == 1
+        assert weights.shape[0] == 1
 
         # Weights should sum to 2 (length of reference line [-1, 1])
         assert np.allclose(weights.sum(), 2.0)
@@ -163,10 +165,11 @@ class TestIntegrationRuleLine:
         nodes, weights = rule(2)
 
         # Should have 2*2+1 = 5 integration points
-        assert nodes.shape[0] == 5
-        assert weights.shape[0] == 5
+        assert nodes.shape[0] == 2
+        assert weights.shape[0] == 2
 
-        # Weights should sum to 2
+        # Weights should sum to 2, which is the length of the reference line with nodes (-1,1), (1,1),
+        # i.e. \int_{L_\text{ref}} f(x) dx with f \equiv 1
         assert np.allclose(weights.sum(), 2.0)
 
     def test_integration_rule_line_caching(self):
@@ -223,9 +226,9 @@ class TestGetIntegrationRuleFunctions:
         """
         X, Y, omega = get_integration_rule_trig(1)
 
-        assert X.shape[0] == 9
-        assert Y.shape[0] == 9
-        assert omega.shape[0] == 9
+        assert X.shape[0] == 1
+        assert Y.shape[0] == 1
+        assert omega.shape[0] == 1
         assert np.allclose(omega.sum(), 2.0)
 
     def test_get_integration_rule_line(self):
@@ -235,6 +238,6 @@ class TestGetIntegrationRuleFunctions:
         """
         nodes, weights = get_integration_rule_line(1)
 
-        assert nodes.shape[0] == 3
-        assert weights.shape[0] == 3
+        assert nodes.shape[0] == 1
+        assert weights.shape[0] == 1
         assert np.allclose(weights.sum(), 2.0)

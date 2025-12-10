@@ -60,7 +60,7 @@ class IntegrationRuleTrig:
         :return: Tuple of (X coordinates, Y coordinates, weights)
         :rtype: Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]
         """
-        nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
+        nodes, weights = np.polynomial.legendre.leggauss(p)
         X, Y = np.meshgrid(nodes, nodes)
         X_t, Y_t = duffy(X, Y)
         X_t = X_t.reshape(X_t.size, 1)
@@ -105,7 +105,7 @@ class IntegrationRuleLine:
         :return: Tuple of (nodes, weights)
         :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
         """
-        nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
+        nodes, weights = np.polynomial.legendre.leggauss(p)
         nodes = nodes.reshape(nodes.size, 1)
         return nodes, weights
 

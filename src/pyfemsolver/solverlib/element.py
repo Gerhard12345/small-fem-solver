@@ -171,7 +171,7 @@ class H1Fel:
         :return: The mass matrix of the element
         :rtype: NDArray[float64]
         """
-        X, Y, omega = get_integration_rule_trig(self.p)
+        X, Y, omega = get_integration_rule_trig(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         mass = (shape * omega.T) @ shape.T
@@ -190,7 +190,7 @@ class H1Fel:
         :return: The stiffness matrix of the element
         :rtype: NDArray[float64]
         """
-        X, Y, omega = get_integration_rule_trig(self.p)
+        X, Y, omega = get_integration_rule_trig(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         omega = np.concatenate([omega, omega])
         dshape = self.dshape_functions(X, Y)
@@ -218,7 +218,7 @@ class H1Fel:
         :return: The element vector for the element and function f.
         :rtype: NDArray[float64]
         """
-        X, Y, omega = get_integration_rule_trig(self.p)
+        X, Y, omega = get_integration_rule_trig(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         x_phys, y_phys = eltrans.transform_points(X, Y)
@@ -238,7 +238,7 @@ class H1Fel:
         :return: The mass matrix for the edge.
         :rtype: NDArray[float64]
         """
-        X, omega = get_integration_rule_line(self.p)
+        X, omega = get_integration_rule_line(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
         mass = (shape * omega) @ shape.T
@@ -261,7 +261,7 @@ class H1Fel:
         :return: The element vector for the edge and function f.
         :rtype: NDArray[float64]
         """
-        X, omega = get_integration_rule_line(self.p)
+        X, omega = get_integration_rule_line(self.p + 1)
         x_phys, y_phys = eltrans.transform_points(X)
         f_vals = f(x_phys, y_phys)
         omega *= eltrans.getjacobian_determinant()
