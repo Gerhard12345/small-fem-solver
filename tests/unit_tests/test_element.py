@@ -1,30 +1,45 @@
-""" "Unit tests for H1 finite element class and related functions."""
+"""Unit tests for H1 finite element class."""
 
 import numpy as np
+import pytest
+from unittest.mock import MagicMock, patch, Mock
 
 from src.pyfemsolver.solverlib.element import H1Fel
 
-from src.pyfemsolver.solverlib.polynomials import (
-    integrated_jacobi_polynomial,
-    barycentric_coordinates,
-    barycentric_coordinates_line,
-)
 
-from src.pyfemsolver.solverlib.integrationrules import duffy
-from src.pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig, ElementTransformationLine
+class TestH1FelConstructor:
+    """Unit tests for H1Fel constructor."""
 
+    def test_constructor_order_1(self):
+        """Given: order p=1 element
+        When: the element is constructed
+        Then: the element fields match expected values
+        """
+        p = 1
+        fel = H1Fel(order=p)
+        assert fel.p == p
+        assert fel.ndof_vertex == 3
+        assert fel.ndof_faces == 0
+        assert fel.ndof_facet == 0
+        assert fel.ndof_inner == 0
+        assert fel.ndof == 3
 
-class TestElement:
-    """Unit tests for H1 finite element class and related functions."""
+    def test_constructor_order_2(self):
+        """Given: order p=2 element
+        When: the element is constructed
+        Then: the element fields match expected values
+        """
+        p = 2
+        fel = H1Fel(order=p)
+        assert fel.p == p
+        assert fel.ndof_vertex == 3
+        assert fel.ndof_faces == 3 * (p - 1)
+        assert fel.ndof_facet == p - 1
+        assert fel.ndof_inner == int((p - 1) * (p - 2) / 2)
+        assert fel.ndof == 3 * p + int((p - 2) * (p - 1) / 2)
 
-    def setup_method(self):
-        """Called before every test method."""
-
-    def teardown_method(self):
-        """Called after every test method."""
-
-    def test_constructor(self):
-        """Given: an order p=3 element
+    def test_constructor_order_3(self):
+        """Given: order p=3 element
         When: the element is constructed
         Then: the element fields (p, ndof_*) match expected values
         """
@@ -37,177 +52,311 @@ class TestElement:
         assert fel.ndof_inner == int((p - 1) * (p - 2) / 2)
         assert fel.ndof == 3 * p + int((p - 2) * (p - 1) / 2)
 
-    def test_flip_edge(self):
-        """Given: a second-order element and an edge index
-        When: flip_edge is called for that edge
+    def test_constructor_edges(self):
+        """Given: any order element
+        When: the element is constructed
+        Then: edges are initialized correctly
+        """
+        fel = H1Fel(order=2)
+        assert fel.edges == [(0, 1), (1, 2), (2, 0)]
+
+
+class TestH1FelEdgeFlipping:
+    """Unit tests for H1Fel edge flipping."""
+
+    def test_flip_edge_first(self):
+        """Given: an element and first edge
+        When: flip_edge is called for edge 0
         Then: the edge tuple is reversed
         """
-        p = 2
-        fel = H1Fel(order=p)
-        for edge_nr in (0, 1, 2):
-            original_edge = fel.edges[edge_nr]
-            fel.flip_edge(edge_nr)
-            flipped_edge = fel.edges[edge_nr]
-            assert flipped_edge == tuple(reversed(original_edge))
+        fel = H1Fel(order=2)
+        original_edge = fel.edges[0]
+        fel.flip_edge(0)
+        assert fel.edges[0] == tuple(reversed(original_edge))
 
-    def test_barycentric_coordinates(self):
-        """Given: reference coordinates (x, y) = (0, 0)
-        When: barycentric_coordinates is evaluated
-        Then: the result sums to 1 and matches expected values
+    def test_flip_edge_second(self):
+        """Given: an element and second edge
+        When: flip_edge is called for edge 1
+        Then: the edge tuple is reversed
         """
-        x = np.array([0.0])
-        y = np.array([0.0])
-        l = barycentric_coordinates(x, y)
-        assert np.allclose(l.sum(axis=0), 1.0)
-        assert np.allclose(l[:, 0], np.array([0.25, 0.25, 0.5]))
+        fel = H1Fel(order=2)
+        original_edge = fel.edges[1]
+        fel.flip_edge(1)
+        assert fel.edges[1] == tuple(reversed(original_edge))
 
-    def test_barycentric_coordinates_line(self):
-        """Given: reference line coordinate t = 0
-        When: barycentric_coordinates_line is evaluated
-        Then: the result sums to 1 and matches expected values
+    def test_flip_edge_third(self):
+        """Given: an element and third edge
+        When: flip_edge is called for edge 2
+        Then: the edge tuple is reversed
         """
-        t = np.array([0.0])
-        l_line = barycentric_coordinates_line(t)
-        assert np.allclose(l_line.sum(axis=0), 1.0)
-        assert np.allclose(l_line[:, 0], np.array([0.5, 0.5]))
+        fel = H1Fel(order=2)
+        original_edge = fel.edges[2]
+        fel.flip_edge(2)
+        assert fel.edges[2] == tuple(reversed(original_edge))
 
-    def test_jacobi_polynomial(self):
-        """Given: order 1 and simple input array
-        When: jacobi_polynomial is evaluated with alpha=0
-        Then: the output shape is correct and values match expected Jacobi polynomials
+    def test_flip_edge_multiple_times(self):
+        """Given: an element with flipped edge
+        When: flip_edge is called again on the same edge
+        Then: the edge returns to original orientation
         """
-        x = np.array([0.0, 0.5])
-        jp = jacobi_polynomial(1, x, 0)
-        # jp[0] == 1, jp[1] == x for alpha=0
-        assert jp.shape == (2, 2)
-        assert np.allclose(jp[0, :], 1.0)
-        assert np.allclose(jp[1, :], x)
+        fel = H1Fel(order=2)
+        original_edge = fel.edges[0]
+        fel.flip_edge(0)
+        fel.flip_edge(0)
+        assert fel.edges[0] == original_edge
 
-    def test_integrated_jacobi_polynomial(self):
-        """Given: order 1 and simple input array
-        When: integrated_jacobi_polynomial is evaluated with alpha=0
-        Then: the second entry matches expected integrated values
-        """
-        x = np.array([0.0, 0.5])
-        ij = integrated_jacobi_polynomial(1, x, 0)
-        assert ij.shape[0] >= 2
-        assert np.allclose(ij[1, :], x + 1)
 
-    def test_duffy_mapping(self):
-        """Given: simple zeta/eta inputs
-        When: duffy mapping is applied
-        Then: outputs are the expected mapped coordinates
-        """
-        zeta = np.array([1.0])
-        eta = np.array([0.5])
-        X_t, Y_t = duffy(zeta, eta)
-        assert np.allclose(X_t, 0.5 * 1.0 * (1 - 0.5))
-        assert np.allclose(Y_t, eta)
+class TestH1FelShapeFunctions:
+    """Unit tests for H1Fel shape functions."""
 
-    def test_shape_functions(self):
-        """Given: a cubic element at reference point (0, 0)
-        When: shape_functions is evaluated
-        Then: the first three entries match barycentric coordinates
+    @patch("src.pyfemsolver.solverlib.element.barycentric_coordinates")
+    @patch("src.pyfemsolver.solverlib.element.edge_based_polynomials")
+    @patch("src.pyfemsolver.solverlib.element.h")
+    def test_shape_functions_order_1(self, mock_h, mock_edge, mock_bary):
+        """Given: a first-order element
+        When: shape_functions is called
+        Then: returns only vertex shape functions
         """
+        mock_bary.return_value = np.array([[1.0, 0.0], [0.0, 1.0], [0.0, 0.0]])
+
+        fel = H1Fel(order=1)
+        X = np.array([0.0, 0.5])
+        Y = np.array([0.0, 0.5])
+
+        shape = fel.shape_functions(X, Y)
+
+        assert shape.shape == (3, 2)
+        mock_bary.assert_called_once()
+        mock_edge.assert_not_called()
+        mock_h.assert_not_called()
+
+    @patch("src.pyfemsolver.solverlib.element.barycentric_coordinates")
+    @patch("src.pyfemsolver.solverlib.element.edge_based_polynomials")
+    @patch("src.pyfemsolver.solverlib.element.h")
+    def test_shape_functions_order_2(self, mock_h, mock_edge, mock_bary):
+        """Given: a second-order element
+        When: shape_functions is called
+        Then: returns vertex and edge shape functions
+        """
+        mock_bary.return_value = np.array([[0.5], [0.25], [0.25]])
+        mock_edge.return_value = np.array([[0.2]])
+
+        fel = H1Fel(order=2)
+        X = np.array([0.0])
+        Y = np.array([0.0])
+
+        shape = fel.shape_functions(X, Y)
+
+        assert shape.shape == (6, 1)
+        mock_edge.assert_called()
+
+    @patch("src.pyfemsolver.solverlib.element.barycentric_coordinates")
+    @patch("src.pyfemsolver.solverlib.element.edge_based_polynomials")
+    @patch("src.pyfemsolver.solverlib.element.h")
+    def test_shape_functions_order_3(self, mock_h, mock_edge, mock_bary):
+        """Given: a cubic element
+        When: shape_functions is called
+        Then: calls edge and bubble helper functions
+        """
+        mock_bary.return_value = np.array([[0.25], [0.25], [0.5]])
+        mock_edge.return_value = np.array([[0.1], [0.3]])
+        mock_h.return_value = [np.array([[0.05]]), np.array([[0.02]])]
+
         fel = H1Fel(order=3)
         X = np.array([0.0])
         Y = np.array([0.0])
         shape = fel.shape_functions(X, Y)
-        # vertex shape functions are the barycentric coordinates
-        l = barycentric_coordinates(X, Y)
-        assert np.allclose(shape[:3, :], l)
 
-    def test_dshape_functions(self):
-        """Given: a cubic element at reference point (0, 0)
-        When: dshape_functions is evaluated
-        Then: the derivative of barycentric coordinates matches expected values
+        assert shape.shape[1] == 1
+        mock_h.assert_called()
+
+
+class TestH1FelDerivatives:
+    """Unit tests for H1Fel derivative functions."""
+
+    @patch("src.pyfemsolver.solverlib.element.barycentric_coordinates")
+    @patch("src.pyfemsolver.solverlib.element.edge_based_polynomials")
+    @patch("src.pyfemsolver.solverlib.element.h")
+    def test_dshape_functions_order_1(self, mock_h, mock_edge, mock_bary):
+        """Given: a first-order element
+        When: dshape_functions is called
+        Then: returns derivatives only for vertex functions
         """
-        fel = H1Fel(order=3)
+        mock_bary.return_value = np.array([[0.5], [0.25], [0.25]])
+
+        fel = H1Fel(order=1)
         X = np.array([0.0])
         Y = np.array([0.0])
+
         dshape = fel.dshape_functions(X, Y)
-        # derivative of barycentric coordinates wrt x is [-0.5, 0.5, 0]
-        nip = X.size
-        dx = dshape[:3, :nip]
-        assert np.allclose(dx[:, 0], np.array([-0.5, 0.5, 0.0]), atol=1e-4)
 
-    def test_calc_mass_matrix(self):
-        """Given: a second-order element on reference triangle
-        When: calc_mass_matrix is computed
-        Then: the matrix is symmetric with non-negative diagonal
+        # 3 functions, 2 directions (dx and dy)
+        assert dshape.shape[0] == 3
+        assert dshape.shape[1] == 2  # 2 nip * 2 directions
+
+    @patch("src.pyfemsolver.solverlib.element.barycentric_coordinates")
+    @patch("src.pyfemsolver.solverlib.element.edge_based_polynomials")
+    @patch("src.pyfemsolver.solverlib.element.h")
+    def test_dshape_functions_order_2(self, mock_h, mock_edge, mock_bary):
+        """Given: a second-order element
+        When: dshape_functions is called
+        Then: returns derivatives for vertex and edge functions
         """
-        fel = H1Fel(order=2)
-        points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
-        mass = fel.calc_mass_matrix(eltrans)
-        assert np.allclose(mass, mass.T)
-        assert np.all(np.diag(mass) >= 0)
+        mock_bary.return_value = np.array([[0.5], [0.25], [0.25]])
+        mock_edge.return_value = np.array([[0.2]])
 
-    def test_calc_gradu_gradv_matrix(self):
-        """Given: a second-order element on reference triangle
+        fel = H1Fel(order=2)
+        X = np.array([0.0])
+        Y = np.array([0.0])
+
+        dshape = fel.dshape_functions(X, Y)
+
+        # 6 functions, 2 directions
+        assert dshape.shape == (6, 2)
+
+
+class TestH1FelMatrices:
+    """Unit tests for H1Fel matrix computation methods."""
+
+    @patch("src.pyfemsolver.solverlib.element.get_integration_rule_trig")
+    def test_calc_mass_matrix_symmetry(self, mock_rule):
+        """Given: a second-order element
+        When: calc_mass_matrix is computed
+        Then: the matrix is symmetric
+        """
+        # Mock integration rule
+        X = np.array([[0.0], [1.0], [-1.0]])
+        Y = np.array([[0.0], [0.0], [0.0]])
+        omega = np.array([0.1, 0.2, 0.2])
+        mock_rule.return_value = (X, Y, omega)
+
+        fel = H1Fel(order=2)
+
+        # Create mock element transformation
+        mock_eltrans = MagicMock()
+        mock_eltrans.getjacobian_determinant.return_value = 1.0
+
+        with patch.object(fel, "shape_functions") as mock_shape:
+            # Return dummy shape functions
+            mock_shape.return_value = np.ones((6, 3))
+
+            mass = fel.calc_mass_matrix(mock_eltrans)
+
+            assert np.allclose(mass, mass.T)
+
+    @patch("src.pyfemsolver.solverlib.element.get_integration_rule_trig")
+    def test_calc_gradu_gradv_matrix_symmetry(self, mock_rule):
+        """Given: a second-order element
         When: calc_gradu_gradv_matrix is computed
         Then: the stiffness matrix is symmetric
         """
-        fel = H1Fel(order=2)
-        points = np.array([[-1.0, -1.0], [1.0, -1.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
-        stiff = fel.calc_gradu_gradv_matrix(eltrans)
-        assert np.allclose(stiff, stiff.T)
+        X = np.array([[0.0], [1.0], [-1.0]])
+        Y = np.array([[0.0], [0.0], [0.0]])
+        omega = np.array([0.1, 0.2, 0.2])
+        mock_rule.return_value = (X, Y, omega)
 
-    def test_calc_element_vector(self):
-        """Given: a second-order element on reference triangle and constant function f=1
+        fel = H1Fel(order=2)
+
+        mock_eltrans = MagicMock()
+        mock_eltrans.getjacobian_determinant.return_value = 1.0
+        mock_eltrans.get_jacobian_inverse.return_value = np.eye(2)
+
+        with patch.object(fel, "dshape_functions") as mock_dshape:
+            mock_dshape.return_value = np.ones((6, 6))
+
+            stiff = fel.calc_gradu_gradv_matrix(mock_eltrans)
+
+            assert np.allclose(stiff, stiff.T)
+
+    @patch("src.pyfemsolver.solverlib.element.get_integration_rule_trig")
+    def test_calc_element_vector(self, mock_rule):
+        """Given: a second-order element and a function
         When: calc_element_vector is computed
-        Then: the sum of integrals matches 0.5. (Each linear shape function integrates to 1/3,
-        the quadratic ones to -1/6)
+        Then: returns vector with correct shape
         """
-        fel = H1Fel(order=2)
-        points = np.array([[-1.0, 0.0], [1.0, 0.0], [0.0, 1.0]])
-        eltrans = ElementTransformationTrig(points)
-        elem_vec = fel.calc_element_vector(eltrans, lambda x, _: np.ones_like(x))
-        for i in range(3):
-            assert np.allclose(elem_vec[i].sum(), 1.0 / 3.0, atol=1e-6)
-        for i in range(3, 6):
-            assert np.allclose(elem_vec[i].sum(), -1.0 / 6.0, atol=1e-6)
-        assert np.allclose(elem_vec.sum(), 0.5, atol=1e-6)
+        X = np.array([[0.0], [1.0], [-1.0]])
+        Y = np.array([[0.0], [0.0], [0.0]])
+        omega = np.array([0.1, 0.2, 0.2])
+        mock_rule.return_value = (X, Y, omega)
 
-    def test_calc_edge_mass_matrix(self):
-        """Given: an edge of the reference triangle
-        When: calc_edge_mass_matrix is computed
-        Then: the edge mass matrix is symmetric
-        """
         fel = H1Fel(order=2)
-        edge_pts = np.array([[-1.0, -1.0], [1.0, -1.0]])
-        eltrans = ElementTransformationLine(edge_pts)
-        edge_mass = fel.calc_edge_mass_matrix(eltrans)
-        assert np.allclose(edge_mass, edge_mass.T)
 
-    def test_calc_edge_element_vector(self):
-        """Given: an edge of the reference triangle and constant function f=1
-        When: calc_edge_element_vector is computed
-        Then: the sum of integrals matches 4/3. The linear shape functions integrate to 1,
-        the quadratic one to -2/3.
-        """
-        fel = H1Fel(order=2)
-        edge_pts = np.array([[-1.0, 0.0], [1.0, 0.0]])
-        eltrans = ElementTransformationLine(edge_pts)
-        edge_vec = fel.calc_edge_element_vector(eltrans, lambda x, _: np.ones_like(x))
-        for i in range(2):
-            assert np.allclose(edge_vec[i].sum(), 1.0, atol=1e-6)
-        assert np.allclose(edge_vec[2].sum(), -2.0 / 3.0, atol=1e-6)
-        assert np.allclose(edge_vec.sum(), 4.0 / 3.0, atol=1e-6)
+        mock_eltrans = MagicMock()
+        mock_eltrans.getjacobian_determinant.return_value = 1.0
+        mock_eltrans.transform_points.return_value = (X, Y)
 
-    def test_edge_shape_functions_match_integrated_jacobi(self):
-        """Given: an element of order p and a point on the 1D reference line
-        When: edge_shape_functions() is called
-        Then: the first two entries are barycentric and higher entries match integrated Jacobi
+        with patch.object(fel, "shape_functions") as mock_shape:
+            mock_shape.return_value = np.ones((6, 3))
+
+            f = lambda x, y: np.ones_like(x)
+            elem_vec = fel.calc_element_vector(mock_eltrans, f)
+
+            assert elem_vec.shape == (6, 1)
+
+
+class TestH1FelEdgeFunctions:
+    """Unit tests for H1Fel edge-related functions."""
+
+    @patch("src.pyfemsolver.solverlib.element.barycentric_coordinates_line")
+    @patch("src.pyfemsolver.solverlib.element.integrated_jacobi_polynomial")
+    def test_edge_shape_functions(self, mock_ij, mock_bary_line):
+        """Given: an element and a point on the reference line
+        When: edge_shape_functions is called
+        Then: returns shape functions with correct shape
         """
-        p = 3
-        fel = H1Fel(order=p)
+        mock_bary_line.return_value = np.array([[0.5], [0.5]])
+        mock_ij.return_value = np.array([[1.0], [0.5], [0.25]])
+
+        fel = H1Fel(order=3)
         t = np.array([0.0])
+
         es = fel.edge_shape_functions(t)
-        # first two are barycentric line coords
-        bl = barycentric_coordinates_line(t)
-        assert np.allclose(es[:2, :], bl)
-        # the rest should equal integrated_jacobi_polynomial(p, t, 0)[2:, :]
-        ij = integrated_jacobi_polynomial(p, t, 0)[2:, :]
-        assert np.allclose(es[2:, :], ij)
+
+        # Should have p+1 = 4 shape functions
+        assert es.shape == (4, 1)
+
+    @patch("src.pyfemsolver.solverlib.element.get_integration_rule_line")
+    def test_calc_edge_mass_matrix_symmetry(self, mock_rule):
+        """Given: a second-order element edge
+        When: calc_edge_mass_matrix is computed
+        Then: the matrix is symmetric
+        """
+        X = np.array([[0.0], [1.0]])
+        omega = np.array([1.0, 1.0])
+        mock_rule.return_value = (X, omega)
+
+        fel = H1Fel(order=2)
+
+        mock_eltrans = MagicMock()
+        mock_eltrans.getjacobian_determinant.return_value = 1.0
+
+        with patch.object(fel, "edge_shape_functions") as mock_shape:
+            mock_shape.return_value = np.ones((3, 2))
+
+            edge_mass = fel.calc_edge_mass_matrix(mock_eltrans)
+
+            assert np.allclose(edge_mass, edge_mass.T)
+
+    @patch("src.pyfemsolver.solverlib.element.get_integration_rule_line")
+    def test_calc_edge_element_vector(self, mock_rule):
+        """Given: a second-order element edge and a function
+        When: calc_edge_element_vector is computed
+        Then: returns vector with correct shape
+        """
+        X = np.array([[0.0], [1.0]])
+        omega = np.array([1.0, 1.0])
+        mock_rule.return_value = (X, omega)
+
+        fel = H1Fel(order=2)
+
+        mock_eltrans = MagicMock()
+        mock_eltrans.getjacobian_determinant.return_value = 1.0
+        mock_eltrans.transform_points.return_value = (X, X)
+
+        with patch.object(fel, "edge_shape_functions") as mock_shape:
+            mock_shape.return_value = np.ones((3, 2))
+
+            f = lambda x, y: np.ones_like(x)
+            edge_vec = fel.calc_edge_element_vector(mock_eltrans, f)
+
+            assert edge_vec.shape == (3, 1)

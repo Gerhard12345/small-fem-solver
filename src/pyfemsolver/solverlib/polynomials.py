@@ -24,6 +24,8 @@ def jacobi_polynomial(n: int, x: NDArray[np.floating], alpha: float | int) -> ND
     """
     vals = np.zeros((n + 1, len(x)))
     vals[0, :] = 1
+    if n == 0:
+        return vals
     vals[1, :] = 0.5 * (alpha + (alpha + 2) * x)
     for j in range(1, n):
         a_1 = (2 * j + alpha + 1) / ((2 * j + 2) * (j + alpha + 1) * (2 * j + alpha))
