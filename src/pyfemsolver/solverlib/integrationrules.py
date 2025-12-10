@@ -24,7 +24,7 @@ def duffy(zeta: NDArray[np.floating], eta: NDArray[np.floating]) -> Tuple[NDArra
     return 0.5 * zeta * (1 - eta), eta
 
 
-class GetIntegrationRuleTrig:
+class IntegrationRuleTrig:
     """Compute and cache Gauss-Legendre integration rules for triangular elements.
 
     Integration rules are computed on demand and cached for reuse in subsequent calls.
@@ -63,13 +63,13 @@ class GetIntegrationRuleTrig:
         nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
         X, Y = np.meshgrid(nodes, nodes)
         X_t, Y_t = duffy(X, Y)
-        X_t = X_t.flatten()
-        Y_t = Y_t.flatten()
+        X_t = X_t.reshape(X_t.size, 1)
+        Y_t = Y_t.reshape(X_t.size, 1)
         omega = np.outer(weights * 1.0 / 2.0 * (1.0 - nodes), weights).flatten()
         return X_t, Y_t, omega
 
 
-class GetIntegrationRuleLine:
+class IntegrationRuleLine:
     """Compute and cache Gauss-Legendre integration rules for line elements.
 
     Integration rules are computed on demand and cached for reuse in subsequent calls.
@@ -106,4 +106,34 @@ class GetIntegrationRuleLine:
         :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
         """
         nodes, weights = np.polynomial.legendre.leggauss(2 * p + 1)
+        nodes = nodes.reshape(nodes.size, 1)
         return nodes, weights
+
+
+def get_integration_rule_trig(
+    p: int,
+) -> Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]:
+    """Get integration rule for triangles of order p.
+
+    :param p: Order of the integration rule (number of Gauss points = 2p+1)
+    :type p: int
+    :return: Tuple of (X coordinates, Y coordinates, weights)
+    :rtype: Tuple[NDArray[np.floating], NDArray[np.floating], NDArray[np.floating]]
+    """
+    return _integration_rule_trig(p)
+
+
+def get_integration_rule_line(p: int) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
+    """Get integration rule for lines of order p.
+
+    :param p: Order of the integration rule (number of Gauss points = 2p+1)
+    :type p: int
+    :return: Tuple of (nodes, weights)
+    :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
+    """
+    return _integration_rule_line(p)
+
+
+# Instantiate global integration rule objects for reuse
+_integration_rule_trig = IntegrationRuleTrig()
+_integration_rule_line = IntegrationRuleLine()

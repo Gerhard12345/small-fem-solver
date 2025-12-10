@@ -5,146 +5,16 @@ The basis functions are constructed using integrated Jacobi polynomials as descr
 https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
 """
 
-from typing import Tuple, List, Callable
+from typing import Callable
 
 import numpy as np
 from numpy.typing import NDArray
 
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
-from .integrationrules import GetIntegrationRuleTrig, GetIntegrationRuleLine
+from .integrationrules import get_integration_rule_trig, get_integration_rule_line
 
 
-def jacobi_polynomial(n: int, x: NDArray[np.floating], alpha: float | int) -> NDArray[np.floating]:
-    """
-    Evaluate Jacobi polynomials of order n at points x with parameter alpha.
-
-    :param n: Order of the Jacobi polynomial
-    :type n: int
-    :param x: Evaluation points
-    :type x: NDArray[np.floating]
-    :param alpha: The alpha parameter of the Jacobi polynomial
-    :type alpha: float | int
-    :return: The first n Jacobi polynomials evaluated at x
-    :rtype: NDArray[float64]
-    """
-    vals = np.zeros((n + 1, len(x)))
-    vals[0, :] = 1
-    vals[1, :] = 0.5 * (alpha + (alpha + 2) * x)
-    for j in range(1, n):
-        a_1 = (2 * j + alpha + 1) / ((2 * j + 2) * (j + alpha + 1) * (2 * j + alpha))
-        a_2 = (2 * j + alpha + 2) * (2 * j + alpha)
-        a_3 = j * (j + alpha) * (2 * j + alpha + 2) / ((j + 1) * (j + alpha + 1) * (2 * j + alpha))
-        vals[j + 1, :] = a_1 * (a_2 * x + alpha**2) * vals[j, :] - a_3 * vals[j - 1, :]
-    return vals
-
-
-def integrated_jacobi_polynomial(n: int, x: NDArray[np.floating], alpha: float | int) -> NDArray[np.floating]:
-    """
-    Evaluate integrated Jacobi polynomials of order n at points x with parameter alpha.
-
-    :param n: Order of the integrated Jacobi polynomial
-    :type n: int
-    :param x: Evaluation points
-    :type x: NDArray[np.floating]
-    :param alpha: The alpha parameter of the Jacobi polynomial
-    :type alpha: float | int
-    :return: The first n Jacobi polynomials evaluated at x
-    :rtype: NDArray[float64]
-    """
-    vals = np.zeros((n + 1, len(x)))
-    vals[0, :] = 1
-    if n == 0:
-        return vals
-    vals[1, :] = x + 1
-    if n == 1:
-        return vals
-    jacobi_poly_vals = jacobi_polynomial(n + 1, x, alpha)
-    for j in range(2, n + 1):
-        a_1 = (2 * j + 2 * alpha) / ((2 * j + alpha - 1) * (2 * j + alpha))
-        a_2 = 2 * alpha / ((2 * j + alpha - 2) * (2 * j + alpha))
-        a_3 = (2 * j - 2) / ((2 * j + alpha - 1) * (2 * j + alpha - 2))
-        vals[j, :] = a_1 * jacobi_poly_vals[j, :] + a_2 * jacobi_poly_vals[j - 1, :] - a_3 * jacobi_poly_vals[j - 2, :]
-    return vals
-
-
-def barycentric_coordinates(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
-    """
-    Computes the barycentric coordinates for a triangle with corners (-1,-1),(1,-1),(0,1).
-
-    :param x: Evaluation points in x direction
-    :type x: NDArray[np.floating]
-    :param y: Evaluation points in y direction
-    :type y: NDArray[np.floating]
-    :return: Evaluated barycentric coordinates
-    :rtype: NDArray[float64]
-    """
-    return 1 / 4 * np.array([1 - 2 * x - y, 1 + 2 * x - y, 2 + 2 * y])
-
-
-def barycentric_coordinates_line(t: NDArray[np.floating]) -> NDArray[np.floating]:
-    """
-    Computes the barycentric coordinates for a line with corners (-1,0),(1,0).
-
-    :param t: Evaluation points along the line
-    :type t: NDArray[np.floating]
-    :return: Evaluated barycentric coordinates
-    :rtype: NDArray[float64]
-    """
-    # barycentric coordinates, corner sorting: (-1,0),(1,0)
-    return 1 / 2 * np.array([1 - t, 1 + t])
-
-
-def g(p: int, E: Tuple[int, int], x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
-    """
-    Helper function to compute edge shape functions.
-    The funtion vanishes on all edges except edge E.
-
-    :param p: Order of the polynomial on the edge
-    :type p: int
-    :param E: The edge defined by its two vertex indices (0,1), (1,2), or (2,0)
-    :type E: Tuple[int, int]
-    :param x: Evaluation points in x direction
-    :type x: NDArray[np.floating]
-    :param y: Evaluation points in y direction
-    :type y: NDArray[np.floating]
-    :return: Evaluated edge shape functions
-    :rtype: NDArray[float64]
-    """
-    e_1 = E[0]
-    e_2 = E[1]
-    l = barycentric_coordinates(x, y)
-    l1 = l[e_2] + l[e_1]
-    l2 = l[e_2] - l[e_1]
-    with np.errstate(divide="ignore", invalid="ignore"):
-        # x = l2 / l1
-        x = np.where(l1 == 0, 0, l2 / l1)
-    vals_1 = integrated_jacobi_polynomial(p, x, 0)[2:, :]
-    vals_2 = np.array([l1**j for j in range(2, p + 1)])
-    return vals_1 * vals_2
-
-
-def h(p: int, x: NDArray[np.floating], y: NDArray[np.floating]) -> List[NDArray[np.floating]]:
-    """
-    Helper function to compute bubble shape functions. The function vanishes on edge (0,1),
-    thus compensating the edge functions.
-
-    :param p: Order of the polynomial in the interior
-    :type p: int
-    :param x: Evaluation points in x direction
-    :type x: NDArray[np.floating]
-    :param y: Evaluation points in y direction
-    :type y: NDArray[np.floating]
-    :return: Evaluated helper functions
-    :rtype: List[NDArray[float64]]
-    """
-    l = barycentric_coordinates(x, y)
-    l1 = 2 * l[2] - 1
-    vals_1: List[NDArray[np.floating]] = []
-    for i in range(2, p):
-        s = integrated_jacobi_polynomial(p - i, l1, 2 * i - 1)[1:, :]
-        vals_1.append(s)
-
-    return vals_1
+from .polynomials import integrated_jacobi_polynomial, barycentric_coordinates, barycentric_coordinates_line, edge_based_polynomials, h
 
 
 class H1Fel:
@@ -154,9 +24,6 @@ class H1Fel:
     """
 
     # Class-level integration rule instances (shared across all instances)
-    _integration_rule_trig = GetIntegrationRuleTrig()
-    _integration_rule_line = GetIntegrationRuleLine()
-
     def __init__(self, order: int):
         self.p = order
         self.edges = [(0, 1), (1, 2), (2, 0)]
@@ -194,6 +61,8 @@ class H1Fel:
         :return: Evaluated shape functions (row index corresponds to shape function, column index to evaluation point)
         :rtype: NDArray[float64]
         """
+        x = x.reshape(x.size)
+        y = y.reshape(y.size)
         shape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), *x.shape))
         # Vertex functions
         shape[:3, :] = barycentric_coordinates(x, y)
@@ -201,7 +70,7 @@ class H1Fel:
             return shape
         # Edge functions
         for i in range(3):
-            shape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :] = g(self.p, self.edges[i], x, y)
+            shape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :] = edge_based_polynomials(self.p, self.edges[i], x, y)
         if self.p < 3:
             return shape
         hs = h(self.p, x, y)
@@ -230,6 +99,8 @@ class H1Fel:
         :return: Evaluated gradients of shape functions. First half are d/dx, second half d/dy (row wise)
         :rtype: NDArray[float64]
         """
+        x = x.reshape(x.size)
+        y = y.reshape(y.size)
         nip = x.size
         dshape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), 2 * nip))
         delta = 1e-7
@@ -239,10 +110,14 @@ class H1Fel:
             return dshape
         for i in range(3):
             dshape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), :nip] = (
-                1 / (2 * delta) * (g(self.p, self.edges[i], x + delta, y) - g(self.p, self.edges[i], x - delta, y))
+                1
+                / (2 * delta)
+                * (edge_based_polynomials(self.p, self.edges[i], x + delta, y) - edge_based_polynomials(self.p, self.edges[i], x - delta, y))
             )
             dshape[(3 + i * (self.p - 1)) : (3 + (i + 1) * (self.p - 1)), nip:] = (
-                1 / (2 * delta) * (g(self.p, self.edges[i], x, y + delta) - g(self.p, self.edges[i], x, y - delta))
+                1
+                / (2 * delta)
+                * (edge_based_polynomials(self.p, self.edges[i], x, y + delta) - edge_based_polynomials(self.p, self.edges[i], x, y - delta))
             )
         if self.p < 3:
             return dshape
@@ -253,10 +128,10 @@ class H1Fel:
 
         i0 = 3 * self.p
         d0 = self.p - 2
-        gp = g(self.p, self.edges[0], x + delta, y)
-        gm = g(self.p, self.edges[0], x - delta, y)
-        gpy = g(self.p, self.edges[0], x, y + delta)
-        gmy = g(self.p, self.edges[0], x, y - delta)
+        gp = edge_based_polynomials(self.p, self.edges[0], x + delta, y)
+        gm = edge_based_polynomials(self.p, self.edges[0], x - delta, y)
+        gpy = edge_based_polynomials(self.p, self.edges[0], x, y + delta)
+        gmy = edge_based_polynomials(self.p, self.edges[0], x, y - delta)
 
         for i in range(2, self.p):
             dshape[i0 : i0 + d0, :nip] = (gp[i - 2] * tsp[i - 2] - gm[i - 2] * tsm[i - 2]) / (2 * delta)
@@ -279,6 +154,7 @@ class H1Fel:
         :return: Evaluated edge shape functions
         :rtype: NDArray[float64]
         """
+        t = t.reshape(t.size)
         shape = np.zeros((self.p + 1, *t.shape))
         shape[:2, :] = barycentric_coordinates_line(t)
         shape[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
@@ -295,10 +171,10 @@ class H1Fel:
         :return: The mass matrix of the element
         :rtype: NDArray[float64]
         """
-        X, Y, omega = self._integration_rule_trig(self.p)
+        X, Y, omega = get_integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
-        mass = (shape * omega) @ shape.T
+        mass = (shape * omega.T) @ shape.T
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
@@ -314,20 +190,15 @@ class H1Fel:
         :return: The stiffness matrix of the element
         :rtype: NDArray[float64]
         """
-        X, Y, omega = self._integration_rule_trig(self.p + 1)
+        X, Y, omega = get_integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
-        omegas_2 = np.zeros((2 * omega.shape[0],))
-        omegas_2[: len(omega)] = omega
-        omegas_2[len(omega) :] = omega
+        omega = np.concatenate([omega, omega])
         dshape = self.dshape_functions(X, Y)
         Jinv = eltrans.get_jacobian_inverse()
         for i in range(self.ndof):
-            temp = dshape[i, :].copy()
-            temp.shape = (2, len(omega))
-            temp2 = Jinv @ temp
-            temp2.shape = (1, len(omegas_2))
-            dshape[i, :] = temp2
-        gradu_gradv = (dshape * omegas_2) @ dshape.T
+            temp = dshape[i, :].reshape((2, len(omega) // 2))
+            np.matmul(Jinv, temp, out=temp)
+        gradu_gradv = (dshape * omega.T) @ dshape.T
         gradu_gradv[np.abs(gradu_gradv) < 1e-16] = 0
         return gradu_gradv
 
@@ -347,16 +218,12 @@ class H1Fel:
         :return: The element vector for the element and function f.
         :rtype: NDArray[float64]
         """
-        X, Y, omega = self._integration_rule_trig(self.p)
+        X, Y, omega = get_integration_rule_trig(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
-        X.shape = (X.shape[0], 1)
-        Y.shape = (Y.shape[0], 1)
-        x, y, z = barycentric_coordinates(X, Y)
-        XY_phys = eltrans.points[0, :] * x + eltrans.points[1, :] * y + eltrans.points[2, :] * z
-        f_vals = f(XY_phys[:, 0], XY_phys[:, 1])
-        f_vals.shape = (f_vals.shape[0], 1)
-        element_vector = (shape * omega) @ f_vals
+        x_phys, y_phys = eltrans.transform_points(X, Y)
+        f_vals = f(x_phys, y_phys)
+        element_vector = (shape * omega.T) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
 
@@ -371,7 +238,7 @@ class H1Fel:
         :return: The mass matrix for the edge.
         :rtype: NDArray[float64]
         """
-        X, omega = self._integration_rule_line(self.p)
+        X, omega = get_integration_rule_line(self.p)
         omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
         mass = (shape * omega) @ shape.T
@@ -394,14 +261,11 @@ class H1Fel:
         :return: The element vector for the edge and function f.
         :rtype: NDArray[float64]
         """
-        X, omega = self._integration_rule_line(self.p)
-        X.shape = (X.shape[0], 1)
-        x, y = barycentric_coordinates_line(X)
-        XY_phys = eltrans.points[0, :] * x + eltrans.points[1, :] * y
-        f_vals = f(XY_phys[:, 0], XY_phys[:, 1])
-        f_vals.shape = (f_vals.shape[0], 1)
+        X, omega = get_integration_rule_line(self.p)
+        x_phys, y_phys = eltrans.transform_points(X)
+        f_vals = f(x_phys, y_phys)
         omega *= eltrans.getjacobian_determinant()
-        shape = self.edge_shape_functions(X.flatten())
+        shape = self.edge_shape_functions(X)
         element_vector = (shape * omega) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector

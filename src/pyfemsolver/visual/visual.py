@@ -47,7 +47,9 @@ def show_grid_function(
         y = np.arange(-1, 1 + dy, dy)
         X, Y = np.meshgrid(x, y)
         X_t, Y_t = duffy(X, Y)
-        s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())
+        X_t = X_t.reshape(X_t.size)
+        Y_t = Y_t.reshape(Y_t.size)
+        s = barycentric_coordinates(X_t, Y_t)
         node_0 = np.array(space.tri.points[trig.points[0]].coordinates)
         node_0.shape = (2, 1)
         node_1 = np.array(space.tri.points[trig.points[1]].coordinates)
@@ -56,7 +58,7 @@ def show_grid_function(
         node_2.shape = (2, 1)
         trig_nodes = node_0 * s[0, :] + node_1 * s[1, :] + node_2 * s[2, :]
         fel = space.elements[i]
-        shape = fel.shape_functions(X_t.flatten(), Y_t.flatten())
+        shape = fel.shape_functions(X_t, Y_t)
         values = np.matrix(shape.T) * u[space.dofs[i]]
         min_val = np.min([min_val, np.min(values)])
         max_val = np.max([max_val, np.max(values)])
@@ -110,7 +112,7 @@ def show_edge_shape(trig_number: int, space: H1Space, ax: Axes3D | None = None):
     :return: None
     """
     t = np.arange(-1, 1.025, 0.025)
-    t.shape = (t.shape[0], 1)
+    t = t.reshape(t.size, 1)
     x, y = barycentric_coordinates_line(t)
     use_new_axes = False
     fig = None
@@ -121,7 +123,7 @@ def show_edge_shape(trig_number: int, space: H1Space, ax: Axes3D | None = None):
     for i, edge_nr in enumerate(trig.edges):
         if use_new_axes:
             ax = fig.add_subplot(1, 3, i + 1, projection="3d")  # type: ignore
-        shape = space.elements[trig_number].edge_shape_functions(t.flatten())
+        shape = space.elements[trig_number].edge_shape_functions(t)
         edge = space.tri.edges[edge_nr]
         xy = space.tri.points[edge.points[0]].coordinates * x + space.tri.points[edge.points[1]].coordinates * y
         for j in shape:

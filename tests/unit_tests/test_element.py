@@ -2,13 +2,14 @@
 
 import numpy as np
 
-from src.pyfemsolver.solverlib.element import (
-    H1Fel,
+from src.pyfemsolver.solverlib.element import H1Fel
+
+from src.pyfemsolver.solverlib.polynomials import (
+    integrated_jacobi_polynomial,
     barycentric_coordinates,
     barycentric_coordinates_line,
-    jacobi_polynomial,
-    integrated_jacobi_polynomial,
 )
+
 from src.pyfemsolver.solverlib.integrationrules import duffy
 from src.pyfemsolver.solverlib.elementtransformation import ElementTransformationTrig, ElementTransformationLine
 

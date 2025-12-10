@@ -4,8 +4,11 @@ and its subclasses for triangular and line elements. Classes can provide Jacobia
 and inverse.
 """
 
+from typing import Tuple
+
 import numpy as np
 from numpy.typing import NDArray
+from .polynomials import barycentric_coordinates_line, barycentric_coordinates
 
 
 class ElementTransformation:
@@ -60,6 +63,24 @@ class ElementTransformationTrig(ElementTransformation):
             ]
         )
 
+    def transform_points(
+        self, ref_points_x: NDArray[np.floating], ref_points_y: NDArray[np.floating]
+    ) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
+        """
+        Transform reference coordinates to physical ones
+
+        :param ref_points_x: x values of reference coordinates
+        :type ref_points_x: NDArray[np.floating]
+        :param ref_points_y: y values of reference coordinates
+        :type ref_points_y: NDArray[np.floating]
+        :return: transformed points in physical domain
+        :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
+        """
+        x, y, z = barycentric_coordinates(ref_points_x, ref_points_y)
+        x_phys = self.points[0, 0] * x + self.points[1, 0] * y + self.points[2, 0] * z
+        y_phys = self.points[0, 1] * x + self.points[1, 1] * y + self.points[2, 1] * z
+        return x_phys, y_phys
+
 
 class ElementTransformationLine(ElementTransformation):
     """Line element transformation class."""
@@ -70,3 +91,17 @@ class ElementTransformationLine(ElementTransformation):
 
     def getjacobian_determinant(self):
         return np.abs(self.J)
+
+    def transform_points(self, ref_points_x: NDArray[np.floating]) -> Tuple[NDArray[np.floating], NDArray[np.floating]]:
+        """
+        Transform reference coordinates to physical ones
+
+        :param ref_points_x: x values of reference coordinates
+        :type ref_points_x: NDArray[np.floating]
+        :return: transformed points in physical domain
+        :rtype: Tuple[NDArray[np.floating], NDArray[np.floating]]
+        """
+        x, y = barycentric_coordinates_line(ref_points_x)
+        x_phys = self.points[0, 0] * x + self.points[1, 0] * y
+        y_phys = self.points[0, 1] * x + self.points[1, 1] * y
+        return x_phys, y_phys
