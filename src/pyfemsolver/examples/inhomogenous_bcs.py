@@ -16,8 +16,10 @@ def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floati
     return (x - 0.5) ** 3 + (y - 0.5) ** 3
 
 
-g = VariableCoefficientFunction({1: u_bnd, 2: u_bnd, 3: u_bnd, 4: u_bnd})
+g = VariableCoefficientFunction({1: u_bnd, 2: u_bnd, 3: u_bnd, 4: u_bnd}, f_shape=(1, 1))
 f = ConstantCoefficientFunction(0)
+f_mass = ConstantCoefficientFunction(0)
+
 
 orders = [1, 4]
 edge_mesh_sizes = [0.4, 0.5]
@@ -35,6 +37,6 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     mesh = generate_mesh(geometry, max_gradient=0.07)
     space = H1Space(mesh, order)
 
-    u, mass2, f_vector2 = solve_bvp(0, 1, space, g, f)
+    u, mass2, f_vector2 = solve_bvp(f_mass, 1, space, g, f)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-6.75, 0.25), dx=0.125, dy=0.125)
     plt.show()  # type:ignore

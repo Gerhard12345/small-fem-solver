@@ -132,7 +132,7 @@ class H1Space:
         """
         global_vector[self.boundary_dofs[edge_index]] += element_vector
 
-    def assemble_mass(self, global_mass: NDArray[np.floating]):
+    def assemble_mass(self, global_mass: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global mass matrix.
 
@@ -146,7 +146,7 @@ class H1Space:
             print(f"Mass matrix, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
             eltrans = ElementTransformationTrig(trig_coords, trig.region)
-            element_matrix = self.elements[i].calc_mass_matrix(eltrans)
+            element_matrix = self.elements[i].calc_mass_matrix(eltrans, f)
             self.local_to_global(element_matrix, global_mass, i)
         print()
 

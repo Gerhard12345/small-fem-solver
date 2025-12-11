@@ -88,7 +88,7 @@ def solve_by_condensation(
 
 
 def solve_bvp(
-    a_1: float,
+    coeff_mass: CoefficientFunction,
     a_2: float,
     space: H1Space,
     g: CoefficientFunction,
@@ -100,7 +100,7 @@ def solve_bvp(
     f_vector = np.zeros((space.ndof, 1))
     u = np.zeros((space.ndof, 1))
     print("Assembling")
-    space.assemble_mass(mass)
+    space.assemble_mass(mass, coeff_mass)
     space.assemble_gradu_gradv(gradu_gradv)
     space.assemble_element_vector(f_vector, f)
     print("Done")
@@ -109,7 +109,7 @@ def solve_bvp(
 
     # the system matrix is the sum of all involved bilinear forms
     print("diagonally precondition")
-    system_matrix = a_1 * mass + a_2 * gradu_gradv
+    system_matrix = mass + a_2 * gradu_gradv
     diag_system_matrix = np.diag(system_matrix).copy()
     print("got diag mass")
     # incoprorate bc on right side

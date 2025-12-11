@@ -112,7 +112,9 @@ space = H1Space(mesh, 4)
 u_bound = DomainConstantCoefficientFunction(values={3: 100, 2: -100, 1: 0.0})
 f = ConstantCoefficientFunction(0)
 
-u1, mass1, f_vector1 = solve_bvp(0, 1, space, u_bound, f)
+f_mass = ConstantCoefficientFunction(0)
+
+u1, mass1, f_vector1 = solve_bvp(f_mass, 1, space, u_bound, f)
 ax, mini, maxi = show_grid_function(u1, space, vrange=(-100, 100), dx=0.05, dy=0.05)
-ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=(-100, 100), dx=0.1, dy=0.1)
+ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=(-100, 100), dx=0.05, dy=0.05)
 plt.show()  # type:ignore

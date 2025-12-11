@@ -110,7 +110,9 @@ space = H1Space(mesh, 3)
 
 u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
 f = ConstantCoefficientFunction(value=0)
+coeff_mass = ConstantCoefficientFunction(value=-1)
 
-u1, mass, f_vector = solve_bvp(-1, 0.6125 * 0.125, space, u_bound, f)
+
+u1, mass, f_vector = solve_bvp(coeff_mass, 0.6125 * 0.125, space, u_bound, f)
 ax, mini, maxi = show_grid_function(u1, space, vrange=(-0.65, 0.65), dx=0.125, dy=0.125)
 plt.show()  # type:ignore

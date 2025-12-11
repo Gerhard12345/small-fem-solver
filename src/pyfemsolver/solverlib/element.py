@@ -157,7 +157,7 @@ class H1Fel:
         shape[2 : (self.p + 1), :] = integrated_jacobi_polynomial(self.p, t, 0)[2:, :]
         return shape
 
-    def calc_mass_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.floating]:
+    def calc_mass_matrix(self, eltrans: ElementTransformationTrig, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the mass matrix for the element defined by the given transformation.
 
@@ -171,7 +171,9 @@ class H1Fel:
         X, Y, omega = get_integration_rule_trig(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
-        mass = (shape * omega.T) @ shape.T
+        x_phys, y_phys = eltrans.transform_points(X, Y)
+        f_vals = f(x_phys, y_phys, eltrans.region)
+        mass = (shape * omega) @ (f_vals * shape.T)
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 

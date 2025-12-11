@@ -25,6 +25,7 @@ def f2(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]
 
 f_domain = VariableCoefficientFunction({1: f1, 2: f2})
 u_bnd = ConstantCoefficientFunction(0)
+f_mass = ConstantCoefficientFunction(0)
 
 orders = [1, 6]
 edge_mesh_sizes = [0.125, 1.25]
@@ -47,7 +48,7 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_me
     mesh = generate_mesh(geometry, max_gradient=0.07)
     space = H1Space(mesh, order)
 
-    u, mass, f_vector = solve_bvp(0, 1, space, u_bnd, f_domain)
+    u, mass, f_vector = solve_bvp(f_mass, 1, space, u_bnd, f_domain)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-0.05, 0.05), dx=plot_spacing, dy=plot_spacing)
     print(mini, maxi)
 plt.show()  # type:ignore
