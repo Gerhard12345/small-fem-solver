@@ -288,7 +288,7 @@ class TestH1FelMatrices:
         with patch.object(fel, "shape_functions") as mock_shape:
             mock_shape.return_value = np.ones((6, 3))
 
-            f = lambda x, y: np.ones_like(x)
+            f = lambda x, y, region: np.ones_like(x)
             elem_vec = fel.calc_element_vector(mock_eltrans, f)
 
             assert elem_vec.shape == (6, 1)
@@ -356,7 +356,7 @@ class TestH1FelEdgeFunctions:
         with patch.object(fel, "edge_shape_functions") as mock_shape:
             mock_shape.return_value = np.ones((3, 2))
 
-            f = lambda x, y: np.ones_like(x)
+            f = lambda x, y, region: np.ones_like(x)
             edge_vec = fel.calc_edge_element_vector(mock_eltrans, f)
 
             assert edge_vec.shape == (3, 1)
