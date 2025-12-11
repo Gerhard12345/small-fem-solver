@@ -248,7 +248,7 @@ def get_region_for_centroid(centroid: Tuple[float, float], geometry: Geometry) -
     return 0
 
 
-def side_length_gradient(points: NDArray[np.floating], simplices: List[List[int]]) -> NDArray[np.floating]:
+def side_length_gradient(points: NDArray[np.floating], simplices: List[NDArray[np.integer]]) -> NDArray[np.floating]:
     """
     Calculate the gradient based on deviation of triangle side lengths.
 
@@ -276,7 +276,11 @@ def side_length_gradient(points: NDArray[np.floating], simplices: List[List[int]
 
 
 def iterate_mesh_optimization(
-    points: NDArray[np.floating], simplices: List[List[int]], geometry: Geometry, inner_point_indicator: List[bool], step_size: float = 0.1
+    points: NDArray[np.floating],
+    simplices: List[NDArray[np.integer]],
+    geometry: Geometry,
+    inner_point_indicator: List[bool],
+    step_size: float = 0.1,
 ) -> NDArray[np.floating]:
     """
     Performs a single iteration of mesh point optimization based on side lengths with constraints.
@@ -475,13 +479,15 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
                         break
                 found_edges.append(edge_nr)
                 edge_definitions[edge_nr] = Edge(
-                    edge, [i], is_boundary_edge=is_boundary_edge[edge_nr], global_edge_nr=edge_nr, region=region
-                )  # type:ignore
+                    edge, [i], is_boundary_edge=is_boundary_edge[edge_nr], global_edge_nr=edge_nr, region=region  # type:ignore
+                )
         region = get_region_for_centroid(np.mean(points2[trig, :], axis=0), geometry)
         trig_definitions.append(
             Triangle(
-                points=tuple(trig.astype(int).tolist()), edges=tuple(edges.index(edge) for edge in trig_local_edges), region=region
-            )  # type:ignore
+                points=tuple(trig.astype(int).tolist()),
+                edges=tuple(edges.index(edge) for edge in trig_local_edges),  # type:ignore
+                region=region,
+            )
         )
 
     boundary_edges = [edge for edge in edge_definitions if edge.is_boundary_edge]

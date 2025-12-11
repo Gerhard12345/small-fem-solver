@@ -2,8 +2,7 @@
 
 from typing import List
 import matplotlib.pyplot as plt
-import numpy as np
-from numpy.typing import NDArray
+
 from ..solverlib.space import H1Space
 from ..solverlib.solving import solve_bvp
 from ..visual.visual import show_grid_function

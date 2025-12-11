@@ -3,8 +3,6 @@ Finite element solver module. Provides functions to set boundary values,
 solve by static condensation, and solve boundary value problems using H1 finite element spaces.
 """
 
-from typing import Callable
-
 import numpy as np
 from numpy.typing import NDArray
 from ..solverlib.space import H1Space
@@ -12,53 +10,6 @@ from ..solverlib.coefficientfunction import CoefficientFunction
 
 
 def set_boundary_values(space: H1Space, g: CoefficientFunction):
-    """
-    Set boundary values for the finite element space.
-
-    :param space: H1 finite element space instance
-    :type space: H1Space
-    :param g: Function defining boundary values
-    :type g: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
-    :return: boundary dof values
-    :rtype: NDArray[np.floating]
-    """
-    print("set boundary vals")
-    boundary_mass = np.matrix(np.zeros((space.ndof, space.ndof)))
-    boundary_f_vector = np.zeros((space.ndof, 1))
-    u_bnd = np.zeros((len(space.unique_boundary_dofs), 1))
-    space.assemble_boundary_mass(boundary_mass)
-    space.assemble_boundary_element_vector(boundary_f_vector, g)
-    k = 0
-    for j, node in enumerate(space.tri.points):
-        if node.is_boundary_point:
-            u_bnd[k] = u_bnd(*node.coordinates)
-            k += 1
-
-    vertex_dofs = range(len(space.tri.boundary_points))
-    edge_dofs = range(len(space.tri.boundary_points), len(space.unique_boundary_dofs))
-
-    X, Y = np.meshgrid(space.unique_boundary_dofs, space.unique_boundary_dofs)
-
-    boundary_mass = boundary_mass[Y, X]
-    boundary_f_vector = boundary_f_vector[space.unique_boundary_dofs]
-    edge_contribution = boundary_mass[:, vertex_dofs] * u_bnd[vertex_dofs]
-    boundary_f_vector -= edge_contribution
-
-    boundary_mass_diag = np.diag(boundary_mass).copy()
-
-    for i in range(len(vertex_dofs), len(space.unique_boundary_dofs)):
-        boundary_f_vector[i] /= np.sqrt(boundary_mass_diag[i])
-        for j in range(len(vertex_dofs), len(space.unique_boundary_dofs)):
-            boundary_mass[i, j] /= np.sqrt(boundary_mass_diag[i]) * np.sqrt(boundary_mass_diag[j])
-    u_bnd[edge_dofs] = boundary_mass[edge_dofs, :][:, edge_dofs] ** -1 * boundary_f_vector[edge_dofs]
-    for i in range(len(vertex_dofs), len(space.unique_boundary_dofs)):
-        u_bnd[i] /= np.sqrt(boundary_mass_diag[i])
-
-    print("done")
-    return u_bnd
-
-
-def set_boundary_values2(space: H1Space, g: CoefficientFunction):
     """
     Set boundary values for the finite element space.
 
@@ -154,7 +105,7 @@ def solve_bvp(
     space.assemble_element_vector(f_vector, f)
     print("Done")
     # set boundary values
-    u[space.unique_boundary_dofs] = set_boundary_values2(space, g)
+    u[space.unique_boundary_dofs] = set_boundary_values(space, g)
 
     # the system matrix is the sum of all involved bilinear forms
     print("diagonally precondition")

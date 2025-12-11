@@ -7,7 +7,6 @@ from numpy.typing import NDArray
 from ..solverlib.space import H1Space
 from ..solverlib.solving import solve_bvp
 from ..visual.visual import show_grid_function
-from ..visual.visual import show_boundary_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import VariableCoefficientFunction, ConstantCoefficientFunction
