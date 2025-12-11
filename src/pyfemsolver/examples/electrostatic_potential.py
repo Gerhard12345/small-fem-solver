@@ -126,7 +126,8 @@ def u_bound(x: NDArray[np.floating] | np.floating, y: NDArray[np.floating] | np.
             vals[i] = 0
     return vals
 
-u_bound = DomainConstantCoefficientFunction(values={3:100,2:-100,1:0.0})
+
+u_bound = DomainConstantCoefficientFunction(values={3: 100, 2: -100, 1: 0.0})
 f = ConstantCoefficientFunction(0)
 
 u1, mass1, f_vector1 = solve_bvp(0, 1, space, u_bound, f)

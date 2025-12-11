@@ -15,16 +15,18 @@ from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import VariableCoefficientFunction, ConstantCoefficientFunction
 
+
 def f1(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     # return np.ones(x.shape)
     return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
+
+
 def f2(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     # return np.ones(x.shape)
     return -np.sin(0.25 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
-
-f_domain = VariableCoefficientFunction({1:f1,2:f2})
+f_domain = VariableCoefficientFunction({1: f1, 2: f2})
 u_bnd = ConstantCoefficientFunction(0)
 
 orders = [1, 6]
@@ -52,5 +54,5 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_me
     ax, mini, maxi = show_grid_function(u, space, vrange=(-0.05, 0.05), dx=plot_spacing, dy=plot_spacing)
     show_boundary_function(u_bnd, mesh, ax)
     print(mini, maxi)
-    ax.set_zlim([-.05, 0.05])  # type:ignore
+    ax.set_zlim([-0.05, 0.05])  # type:ignore
 plt.show()  # type:ignore

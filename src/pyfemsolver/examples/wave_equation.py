@@ -109,7 +109,7 @@ geometry = Geometry(lines=lines, regions=regions)
 mesh = generate_mesh(geometry, max_gradient=0.07)
 space = H1Space(mesh, 3)
 
-u_bound = DomainConstantCoefficientFunction(values={3:0.1,2:-0.1,1:0.0})
+u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
 f = ConstantCoefficientFunction(value=0)
 
 u1, mass, f_vector = solve_bvp(-1, 0.6125 * 0.125, space, u_bound, f)

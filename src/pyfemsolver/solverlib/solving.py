@@ -86,7 +86,7 @@ def set_boundary_values2(space: H1Space, g: CoefficientFunction):
         boundary_f_vector[i] /= np.sqrt(boundary_mass_diag[i])
         for j in range(len(space.unique_boundary_dofs)):
             boundary_mass[i, j] /= np.sqrt(boundary_mass_diag[i]) * np.sqrt(boundary_mass_diag[j])
-    u_bnd = boundary_mass ** -1 * boundary_f_vector
+    u_bnd = boundary_mass**-1 * boundary_f_vector
     for i in range(len(space.unique_boundary_dofs)):
         u_bnd[i] /= np.sqrt(boundary_mass_diag[i])
 

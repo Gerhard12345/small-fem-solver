@@ -199,8 +199,7 @@ class H1Fel:
         gradu_gradv[np.abs(gradu_gradv) < 1e-16] = 0
         return gradu_gradv
 
-    def calc_element_vector(
-        self, eltrans: ElementTransformationTrig, f: CoefficientFunction) -> NDArray[np.floating]:
+    def calc_element_vector(self, eltrans: ElementTransformationTrig, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the element vector for the element defined by the given transformation
         and the function f.
@@ -241,8 +240,7 @@ class H1Fel:
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
-    def calc_edge_element_vector(
-        self, eltrans: ElementTransformationLine, f: CoefficientFunction) -> NDArray[np.floating]:
+    def calc_edge_element_vector(self, eltrans: ElementTransformationLine, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the element vector for an edge defined by the given transformation
         and the function f.

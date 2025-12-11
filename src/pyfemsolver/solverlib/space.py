@@ -10,6 +10,7 @@ from .elementtransformation import ElementTransformationTrig, ElementTransformat
 from .meshing import Triangulation
 from .coefficientfunction import CoefficientFunction
 
+
 class H1Space:
     """H1 Finite element space class. Manages elements, dofs, and assembly."""
 
@@ -167,8 +168,7 @@ class H1Space:
             self.local_to_global(element_matrix, global_gradu_gradv, i)
         print()
 
-    def assemble_element_vector(
-        self, global_vector: NDArray[np.floating], f: CoefficientFunction):
+    def assemble_element_vector(self, global_vector: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global load vector.
 
@@ -206,8 +206,7 @@ class H1Space:
             self.local_to_global_boundary(element_matrix, global_boundary_mass, i)
         print()
 
-    def assemble_boundary_element_vector(
-        self, global_boundary_vector: NDArray[np.floating], f: CoefficientFunction):
+    def assemble_boundary_element_vector(self, global_boundary_vector: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global boundary load vector.
 

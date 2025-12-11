@@ -112,9 +112,8 @@ def edge_based_polynomials(p: int, E: Tuple[int, int], x: NDArray[np.floating], 
     l = barycentric_coordinates(x, y)
     l1 = l[e_2] + l[e_1]
     l2 = l[e_2] - l[e_1]
-    with np.errstate(divide="ignore", invalid="ignore"):
-        #x = l2 / l1
-        x = np.where(l1 == 0, 1, l2 / l1)
+    x = l2 / l1
+    # x = np.where(l1 == 0, 1, l2 / l1)
     vals_1 = integrated_jacobi_polynomial(p, x, 0)[2:, :]
     vals_2 = np.array([l1**j for j in range(2, p + 1)])
     return vals_1 * vals_2

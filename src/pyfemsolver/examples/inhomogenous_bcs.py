@@ -12,9 +12,12 @@ from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import VariableCoefficientFunction, ConstantCoefficientFunction
 
+
 def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     return (x - 0.5) ** 3 + (y - 0.5) ** 3
-g = VariableCoefficientFunction({1:u_bnd, 2:u_bnd, 3:u_bnd, 4:u_bnd})
+
+
+g = VariableCoefficientFunction({1: u_bnd, 2: u_bnd, 3: u_bnd, 4: u_bnd})
 f = ConstantCoefficientFunction(0)
 
 orders = [1, 4]
