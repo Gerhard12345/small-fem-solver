@@ -1,6 +1,6 @@
 """ "H1 Finite element space module. Defines the H1Space class for managing finite element spaces, dofs, and assembly."""
 
-from typing import List, Callable
+from typing import List
 
 import numpy as np
 from numpy.typing import NDArray
@@ -8,7 +8,7 @@ from numpy.typing import NDArray
 from .element import H1Fel
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .meshing import Triangulation
-
+from .coefficientfunction import CoefficientFunction
 
 class H1Space:
     """H1 Finite element space class. Manages elements, dofs, and assembly."""
@@ -168,8 +168,7 @@ class H1Space:
         print()
 
     def assemble_element_vector(
-        self, global_vector: NDArray[np.floating], f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
-    ):
+        self, global_vector: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global load vector.
 
@@ -208,8 +207,7 @@ class H1Space:
         print()
 
     def assemble_boundary_element_vector(
-        self, global_boundary_vector: NDArray[np.floating], f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
-    ):
+        self, global_boundary_vector: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global boundary load vector.
 

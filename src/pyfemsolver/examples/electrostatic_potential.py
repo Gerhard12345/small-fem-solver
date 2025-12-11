@@ -11,6 +11,7 @@ from ..solverlib.solving import solve_bvp
 from ..visual.visual import show_grid_function, show_gradient_of_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
+from ..solverlib.coefficientfunction import ConstantCoefficientFunction, DomainConstantCoefficientFunction
 
 height = 0.6  # pylint:disable=C0103
 width = 2.4  # pylint:disable=C0103
@@ -29,7 +30,7 @@ lines.append(
         left_region=0,
         right_region=1,
         h=1,
-        boundary_index=3,
+        boundary_index=2,
     )
 )
 lines.append(
@@ -39,7 +40,7 @@ lines.append(
         left_region=0,
         right_region=1,
         h=1,
-        boundary_index=3,
+        boundary_index=2,
     )
 )
 lines.append(
@@ -49,7 +50,7 @@ lines.append(
         left_region=0,
         right_region=1,
         h=1,
-        boundary_index=3,
+        boundary_index=2,
     )
 )
 lines.append(
@@ -59,7 +60,7 @@ lines.append(
         left_region=0,
         right_region=1,
         h=1,
-        boundary_index=3,
+        boundary_index=2,
     )
 )
 lines.append(
@@ -125,8 +126,10 @@ def u_bound(x: NDArray[np.floating] | np.floating, y: NDArray[np.floating] | np.
             vals[i] = 0
     return vals
 
+u_bound = DomainConstantCoefficientFunction(values={3:100,2:-100,1:0.0})
+f = ConstantCoefficientFunction(0)
 
-u1, mass1, f_vector1 = solve_bvp(0, 1, space, u_bound, lambda x, y: np.zeros(x.shape))
+u1, mass1, f_vector1 = solve_bvp(0, 1, space, u_bound, f)
 ax, mini, maxi = show_grid_function(u1, space, vrange=(-100, 100), dx=0.05, dy=0.05)
 ax.set_zlim([-100, 100])  # type:ignore
 ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=(-100, 100), dx=0.1, dy=0.1)

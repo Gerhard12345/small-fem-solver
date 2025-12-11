@@ -219,7 +219,7 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
         # Apply Jacobian inverse transformation to map gradients from reference to physical space
         # Create element transformation to get Jacobian inverse
         points = np.array([space.tri.points[p].coordinates for p in trig.points])
-        eltrans = ElementTransformationTrig(points)
+        eltrans = ElementTransformationTrig(points, trig.region)
         Jinv = eltrans.get_jacobian_inverse()
 
         # Transform dshape with Jacobian inverse

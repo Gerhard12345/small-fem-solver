@@ -17,9 +17,9 @@ class ElementTransformation:
     Has no knowledge about the geometric type.
     """
 
-    def __init__(self, points: NDArray[np.floating], region_index: int):
+    def __init__(self, points: NDArray[np.floating], region: int):
         self.points = points  # array of point coordinates
-        self.region_index = region_index
+        self.region = region
         self.J: NDArray[np.floating]
 
     def getjacobian(self):
@@ -55,8 +55,8 @@ class ElementTransformation:
 class ElementTransformationTrig(ElementTransformation):
     """Triangular element transformation class."""
 
-    def __init__(self, points: NDArray[np.floating], region_index: int):
-        super().__init__(points, region_index)
+    def __init__(self, points: NDArray[np.floating], region: int):
+        super().__init__(points, region)
         self.J = np.array(
             [
                 0.5 * (points[1, :] - points[0, :]),
@@ -86,8 +86,8 @@ class ElementTransformationTrig(ElementTransformation):
 class ElementTransformationLine(ElementTransformation):
     """Line element transformation class."""
 
-    def __init__(self, points: NDArray[np.float64], region_index: int):
-        super().__init__(points, region_index)
+    def __init__(self, points: NDArray[np.float64], region: int):
+        super().__init__(points, region)
         self.J = np.array(np.linalg.norm(0.5 * points[1, :] - 0.5 * points[0, :]))
 
     def getjacobian_determinant(self):

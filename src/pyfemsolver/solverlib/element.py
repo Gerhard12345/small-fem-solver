@@ -5,15 +5,12 @@ The basis functions are constructed using integrated Jacobi polynomials as descr
 https://www3.risc.jku.at/publications/download/risc_4253/buch.pdf
 """
 
-from typing import Callable
-
 import numpy as np
 from numpy.typing import NDArray
 
+from .coefficientfunction import CoefficientFunction
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .integrationrules import get_integration_rule_trig, get_integration_rule_line
-
-
 from .polynomials import integrated_jacobi_polynomial, barycentric_coordinates, barycentric_coordinates_line, edge_based_polynomials, h
 
 
@@ -203,8 +200,7 @@ class H1Fel:
         return gradu_gradv
 
     def calc_element_vector(
-        self, eltrans: ElementTransformationTrig, f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
-    ) -> NDArray[np.floating]:
+        self, eltrans: ElementTransformationTrig, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the element vector for the element defined by the given transformation
         and the function f.
@@ -222,7 +218,7 @@ class H1Fel:
         omega *= eltrans.getjacobian_determinant()
         shape = self.shape_functions(X, Y)
         x_phys, y_phys = eltrans.transform_points(X, Y)
-        f_vals = f(x_phys, y_phys)
+        f_vals = f(x_phys, y_phys, eltrans.region)
         element_vector = (shape * omega.T) @ f_vals
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
@@ -246,8 +242,7 @@ class H1Fel:
         return mass
 
     def calc_edge_element_vector(
-        self, eltrans: ElementTransformationLine, f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
-    ) -> NDArray[np.floating]:
+        self, eltrans: ElementTransformationLine, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the element vector for an edge defined by the given transformation
         and the function f.
@@ -263,7 +258,7 @@ class H1Fel:
         """
         X, omega = get_integration_rule_line(self.p + 1)
         x_phys, y_phys = eltrans.transform_points(X)
-        f_vals = f(x_phys, y_phys)
+        f_vals = f(x_phys, y_phys, eltrans.region)
         omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
         element_vector = (shape * omega) @ f_vals

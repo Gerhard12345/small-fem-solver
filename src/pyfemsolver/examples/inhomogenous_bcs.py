@@ -10,15 +10,12 @@ from ..visual.visual import show_grid_function
 from ..visual.visual import show_boundary_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
-
+from ..solverlib.coefficientfunction import VariableCoefficientFunction, ConstantCoefficientFunction
 
 def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
     return (x - 0.5) ** 3 + (y - 0.5) ** 3
-
-
-def f(x: NDArray[np.floating], _: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
-    return np.zeros(x.shape)
-
+g = VariableCoefficientFunction({1:u_bnd, 2:u_bnd, 3:u_bnd, 4:u_bnd})
+f = ConstantCoefficientFunction(0)
 
 orders = [1, 4]
 edge_mesh_sizes = [0.4, 0.5]
@@ -36,7 +33,7 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     mesh = generate_mesh(geometry, max_gradient=0.07)
     space = H1Space(mesh, order)
 
-    u, mass2, f_vector2 = solve_bvp(0, 1, space, u_bnd, f)
+    u, mass2, f_vector2 = solve_bvp(0, 1, space, g, f)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-6.01, 0.01), dx=0.125, dy=0.125)
     show_boundary_function(u_bnd, mesh, ax)
     plt.show()  # type:ignore
