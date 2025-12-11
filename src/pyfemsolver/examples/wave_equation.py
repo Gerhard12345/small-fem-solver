@@ -113,6 +113,5 @@ u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
 f = ConstantCoefficientFunction(value=0)
 
 u1, mass, f_vector = solve_bvp(-1, 0.6125 * 0.125, space, u_bound, f)
-ax, mini, maxi = show_grid_function(u1, space, vrange=(-0.25, 0.25), dx=0.5, dy=0.5)
-ax.set_zlim([-5.0, 5.0])  # type:ignore
+ax, mini, maxi = show_grid_function(u1, space, vrange=(-0.65, 0.65), dx=0.125, dy=0.125)
 plt.show()  # type:ignore

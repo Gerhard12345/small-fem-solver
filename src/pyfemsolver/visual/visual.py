@@ -5,6 +5,7 @@ from typing import Tuple, Callable
 import numpy as np
 from numpy.typing import NDArray
 import matplotlib.pyplot as plt
+from matplotlib.axes import Axes
 from mpl_toolkits.mplot3d.axes3d import Axes3D  # type: ignore
 
 from ..solverlib.meshing import Triangulation
@@ -16,7 +17,7 @@ from ..solverlib.elementtransformation import ElementTransformationTrig
 
 def show_grid_function(
     u: NDArray[np.floating], space: H1Space, vrange: Tuple[float, float], dx: float = 0.01, dy: float = 0.01
-) -> Tuple[Axes3D, float, float]:
+) -> Tuple[Axes, float, float]:
     """
     Display a grid function as a 3D surface plot.
 
@@ -34,12 +35,7 @@ def show_grid_function(
     :rtype: Tuple[plt.Axes, float, float]
     """
     fig = plt.figure()  # type: ignore
-    ax = fig.add_subplot(1, 1, 1, projection="3d")
-    trigs = [trig.points for trig in space.tri.trigs]
-    x_coords = [point.coordinates[0] for point in space.tri.points]
-    y_coords = [point.coordinates[1] for point in space.tri.points]
-    ax.triplot(x_coords, y_coords, trigs)  # type: ignore
-    ax.plot(x_coords, y_coords, "o")  # type: ignore
+    ax = fig.add_subplot(1, 1, 1)
     min_val: float = 1e16
     max_val: float = -1e16
     for i, trig in enumerate(space.tri.trigs):
@@ -62,19 +58,26 @@ def show_grid_function(
         values = np.matrix(shape.T) * u[space.dofs[i]]
         min_val = np.min([min_val, np.min(values)])
         max_val = np.max([max_val, np.max(values)])
-        ax.plot_surface(  # type: ignore
+        levels = np.linspace(vrange[0], vrange[1], 20)
+        ax.contourf(  # type: ignore
             trig_nodes[0, :].reshape(len(x), len(y)),
             trig_nodes[1, :].reshape(len(x), len(y)),
             values.reshape(len(x), len(y)),
+            levels,
             cmap="jet",
-            linestyle="None",
             vmin=vrange[0],
             vmax=vrange[1],
         )
+    trigs = [trig.points for trig in space.tri.trigs]
+    x_coords = [point.coordinates[0] for point in space.tri.points]
+    y_coords = [point.coordinates[1] for point in space.tri.points]
+    ax.triplot(x_coords, y_coords, trigs)  # type: ignore
+    ax.plot(x_coords, y_coords, "o")  # type: ignore
+    print(f"Minimum value of grid function = {min_val}, maximum value of shape function = {max_val}")
     return ax, min_val, max_val
 
 
-def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], dx: float = 0.3, dy: float = 0.3) -> Tuple[Axes3D, float, float]:
+def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], dx: float = 0.3, dy: float = 0.3) -> Tuple[Axes, float, float]:
     """
     Display the shape function corresponding to a given degree of freedom number.
 
@@ -93,7 +96,6 @@ def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], dx:
     u = np.zeros((space.ndof, 1))
     u[dof_number, 0] = 1
     ax, mini, maxi = show_grid_function(u, space, vrange, dx, dy)
-    print(f"Minimum value of shape function = {mini}, maximum value of shape function = {maxi}")
     ax.set_title(f"dof number = {dof_number}")  # type: ignore
     return ax, mini, maxi
 
@@ -183,8 +185,8 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
     """
 
     fig = plt.figure(figsize=(14, 6))  # type: ignore
-    ax_dx = fig.add_subplot(1, 2, 1, projection="3d")
-    ax_dy = fig.add_subplot(1, 2, 2, projection="3d")
+    ax_dx = fig.add_subplot(1, 2, 1)
+    ax_dy = fig.add_subplot(1, 2, 2)
 
     trigs = [trig.points for trig in space.tri.trigs]
     x_coords = [point.coordinates[0] for point in space.tri.points]
@@ -238,25 +240,25 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
 
         min_val = np.min([min_val, np.min(dx_vals), np.min(dy_vals)])
         max_val = np.max([max_val, np.max(dx_vals), np.max(dy_vals)])
-
+        levels = np.linspace(vrange[0], vrange[1], 20)
         # Plot x-gradient
-        ax_dx.plot_surface(  # type: ignore
+        ax_dx.contourf(  # type: ignore
             trig_nodes[0, :].reshape(len(x), len(y)),
             trig_nodes[1, :].reshape(len(x), len(y)),
             dx_vals.reshape(len(x), len(y)),
+            levels,
             cmap="jet",
-            linestyle="None",
             vmin=vrange[0],
             vmax=vrange[1],
         )
 
         # Plot y-gradient
-        ax_dy.plot_surface(  # type: ignore
+        ax_dy.contourf(  # type: ignore
             trig_nodes[0, :].reshape(len(x), len(y)),
             trig_nodes[1, :].reshape(len(x), len(y)),
             dy_vals.reshape(len(x), len(y)),
+            levels,
             cmap="jet",
-            linestyle="None",
             vmin=vrange[0],
             vmax=vrange[1],
         )

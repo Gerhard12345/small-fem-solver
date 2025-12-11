@@ -17,12 +17,10 @@ from ..solverlib.coefficientfunction import VariableCoefficientFunction, Constan
 
 
 def f1(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
-    # return np.ones(x.shape)
     return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
 def f2(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
-    # return np.ones(x.shape)
     return -np.sin(0.25 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
@@ -30,9 +28,9 @@ f_domain = VariableCoefficientFunction({1: f1, 2: f2})
 u_bnd = ConstantCoefficientFunction(0)
 
 orders = [1, 6]
-edge_mesh_sizes = [0.25, 1.25]
-domain_mesh_sizes = [[0.25, 0.25], [0.5, 1.0]]
-plot_spacings = [0.25, 0.025]
+edge_mesh_sizes = [0.125, 1.25]
+domain_mesh_sizes = [[0.125, 0.25], [0.5, 1.0]]
+plot_spacings = [1.0, 0.1]
 for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_mesh_sizes, domain_mesh_sizes, plot_spacings):
     lines: List[Line] = []
     lines.append(Line(start=(0, 0), end=(2, 0), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
@@ -52,7 +50,5 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_me
 
     u, mass, f_vector = solve_bvp(0, 1, space, u_bnd, f_domain)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-0.05, 0.05), dx=plot_spacing, dy=plot_spacing)
-    show_boundary_function(u_bnd, mesh, ax)
     print(mini, maxi)
-    ax.set_zlim([-0.05, 0.05])  # type:ignore
 plt.show()  # type:ignore

@@ -37,6 +37,5 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     space = H1Space(mesh, order)
 
     u, mass2, f_vector2 = solve_bvp(0, 1, space, g, f)
-    ax, mini, maxi = show_grid_function(u, space, vrange=(-6.01, 0.01), dx=0.125, dy=0.125)
-    show_boundary_function(u_bnd, mesh, ax)
+    ax, mini, maxi = show_grid_function(u, space, vrange=(-6.75, 0.25), dx=0.125, dy=0.125)
     plt.show()  # type:ignore
