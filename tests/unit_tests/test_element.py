@@ -234,13 +234,14 @@ class TestH1FelMatrices:
 
         # Create mock element transformation
         mock_eltrans = MagicMock()
+        mock_eltrans.transform_points.return_value = (X, Y)
         mock_eltrans.getjacobian_determinant.return_value = 1.0
 
         with patch.object(fel, "shape_functions") as mock_shape:
             # Return dummy shape functions
             mock_shape.return_value = np.ones((6, 3))
-
-            mass = fel.calc_mass_matrix(mock_eltrans)
+            f = lambda x, y, region: np.ones_like(x)
+            mass = fel.calc_mass_matrix(mock_eltrans, f)
 
             assert np.allclose(mass, mass.T)
 
