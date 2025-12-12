@@ -150,7 +150,7 @@ class H1Space:
             self.local_to_global(element_matrix, global_mass, i)
         print()
 
-    def assemble_gradu_gradv(self, global_gradu_gradv: NDArray[np.floating]):
+    def assemble_gradu_gradv(self, global_gradu_gradv: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global stiffness matrix.
 
@@ -164,7 +164,7 @@ class H1Space:
             print(f"Stiffness, element {i + 1}/{len(self.tri.trigs)}", end="\r")
             trig_coords = np.array([self.tri.points[p].coordinates for p in trig.points])
             eltrans = ElementTransformationTrig(trig_coords, trig.region)
-            element_matrix = self.elements[i].calc_gradu_gradv_matrix(eltrans)
+            element_matrix = self.elements[i].calc_gradu_gradv_matrix(eltrans, f)
             self.local_to_global(element_matrix, global_gradu_gradv, i)
         print()
 
@@ -188,7 +188,7 @@ class H1Space:
             self.local_to_global_vector(element_vector, global_vector, i)
         print()
 
-    def assemble_boundary_mass(self, global_boundary_mass: NDArray[np.floating]):
+    def assemble_boundary_mass(self, global_boundary_mass: NDArray[np.floating], f: CoefficientFunction):
         """
         Assemble the global boundary mass matrix.
 
@@ -202,7 +202,7 @@ class H1Space:
             print(f"Boundary mass, element {i + 1}/{len(self.tri.boundary_edges)}", end="\r")
             edge_coords = np.array([self.tri.points[p].coordinates for p in edge.points])
             eltrans = ElementTransformationLine(edge_coords, edge.region)
-            element_matrix = self.elements[i].calc_edge_mass_matrix(eltrans)
+            element_matrix = self.elements[i].calc_edge_mass_matrix(eltrans, f)
             self.local_to_global_boundary(element_matrix, global_boundary_mass, i)
         print()
 

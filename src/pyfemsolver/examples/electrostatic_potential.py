@@ -3,13 +3,17 @@
 from typing import List
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 from ..solverlib.space import H1Space
-from ..solverlib.solving import solve_bvp
+from ..solverlib.solving import solve_bvp, set_boundary_values
 from ..visual.visual import show_grid_function, show_gradient_of_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import ConstantCoefficientFunction, DomainConstantCoefficientFunction
+from ..solverlib.forms import BilinearForm, LinearForm
+from ..solverlib.integrators import Laplace
+
 
 height = 0.6  # pylint:disable=C0103
 width = 2.4  # pylint:disable=C0103
@@ -114,7 +118,15 @@ f = ConstantCoefficientFunction(0)
 
 f_mass = ConstantCoefficientFunction(0)
 
-u1, mass1, f_vector1 = solve_bvp(f_mass, 1, space, u_bound, f)
-ax, mini, maxi = show_grid_function(u1, space, vrange=(-100, 100), dx=0.05, dy=0.05)
-ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u1, space, vrange=(-100, 100), dx=0.05, dy=0.05)
+laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
+bilinearform = BilinearForm([laplace])
+linearform = LinearForm([])
+
+u = np.zeros((space.ndof, 1))
+set_boundary_values(dof_vector=u, space=space, g=u_bound)
+
+
+solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
+ax, mini, maxi = show_grid_function(u, space, vrange=(-100, 100), dx=0.05, dy=0.05)
+ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u, space, vrange=(-100, 100), dx=0.05, dy=0.05)
 plt.show()  # type:ignore

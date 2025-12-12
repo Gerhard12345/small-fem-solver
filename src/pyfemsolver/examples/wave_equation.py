@@ -3,13 +3,16 @@
 from typing import List
 import matplotlib.pyplot as plt
 
+import numpy as np
+
 from ..solverlib.space import H1Space
-from ..solverlib.solving import solve_bvp
+from ..solverlib.solving import solve_bvp, set_boundary_values
 from ..visual.visual import show_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import DomainConstantCoefficientFunction, ConstantCoefficientFunction
-
+from ..solverlib.forms import BilinearForm, LinearForm
+from ..solverlib.integrators import Laplace, Mass
 
 height = 0.6  # pylint:disable=C0103
 width = 2.4  # pylint:disable=C0103
@@ -112,7 +115,13 @@ u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
 f = ConstantCoefficientFunction(value=0)
 coeff_mass = ConstantCoefficientFunction(value=-1)
 
+laplace = Laplace(coefficient=ConstantCoefficientFunction(0.05), space=space, is_boundary=False)
+mass = Mass(coefficient=ConstantCoefficientFunction(-1), space=space, is_boundary=False)
+bilinearform = BilinearForm([laplace, mass])
+linearform = LinearForm([])
 
-u1, mass, f_vector = solve_bvp(coeff_mass, 0.6125 * 0.125, space, u_bound, f)
-ax, mini, maxi = show_grid_function(u1, space, vrange=(-0.65, 0.65), dx=0.125, dy=0.125)
+u = np.zeros((space.ndof, 1))
+set_boundary_values(dof_vector=u, space=space, g=u_bound)
+solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
+ax, mini, maxi = show_grid_function(u, space, vrange=(-0.32, 0.32), dx=0.125, dy=0.125)
 plt.show()  # type:ignore

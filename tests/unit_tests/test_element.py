@@ -240,8 +240,7 @@ class TestH1FelMatrices:
         with patch.object(fel, "shape_functions") as mock_shape:
             # Return dummy shape functions
             mock_shape.return_value = np.ones((6, 3))
-            f = lambda x, y, region: np.ones_like(x)
-            mass = fel.calc_mass_matrix(mock_eltrans, f)
+            mass = fel.calc_mass_matrix(mock_eltrans, lambda x, y, region: np.ones_like(x))
 
             assert np.allclose(mass, mass.T)
 
@@ -260,12 +259,13 @@ class TestH1FelMatrices:
 
         mock_eltrans = MagicMock()
         mock_eltrans.getjacobian_determinant.return_value = 1.0
+        mock_eltrans.transform_points.return_value = (X, Y)
         mock_eltrans.get_jacobian_inverse.return_value = np.eye(2)
 
         with patch.object(fel, "dshape_functions") as mock_dshape:
             mock_dshape.return_value = np.ones((6, 6))
 
-            stiff = fel.calc_gradu_gradv_matrix(mock_eltrans)
+            stiff = fel.calc_gradu_gradv_matrix(mock_eltrans, lambda x, y, region: np.ones_like(x))
 
             assert np.allclose(stiff, stiff.T)
 
@@ -289,8 +289,7 @@ class TestH1FelMatrices:
         with patch.object(fel, "shape_functions") as mock_shape:
             mock_shape.return_value = np.ones((6, 3))
 
-            f = lambda x, y, region: np.ones_like(x)
-            elem_vec = fel.calc_element_vector(mock_eltrans, f)
+            elem_vec = fel.calc_element_vector(mock_eltrans, lambda x, y, region: np.ones_like(x))
 
             assert elem_vec.shape == (6, 1)
 
@@ -325,16 +324,15 @@ class TestH1FelEdgeFunctions:
         X = np.array([[0.0], [1.0]])
         omega = np.array([1.0, 1.0])
         mock_rule.return_value = (X, omega)
-
         fel = H1Fel(order=2)
 
         mock_eltrans = MagicMock()
         mock_eltrans.getjacobian_determinant.return_value = 1.0
-
+        mock_eltrans.transform_points.return_value = (X, X)
         with patch.object(fel, "edge_shape_functions") as mock_shape:
             mock_shape.return_value = np.ones((3, 2))
 
-            edge_mass = fel.calc_edge_mass_matrix(mock_eltrans)
+            edge_mass = fel.calc_edge_mass_matrix(mock_eltrans, lambda x, y, region: np.ones_like(x))
 
             assert np.allclose(edge_mass, edge_mass.T)
 
@@ -357,7 +355,6 @@ class TestH1FelEdgeFunctions:
         with patch.object(fel, "edge_shape_functions") as mock_shape:
             mock_shape.return_value = np.ones((3, 2))
 
-            f = lambda x, y, region: np.ones_like(x)
-            edge_vec = fel.calc_edge_element_vector(mock_eltrans, f)
+            edge_vec = fel.calc_edge_element_vector(mock_eltrans, lambda x, y, region: np.ones_like(x))
 
             assert edge_vec.shape == (3, 1)

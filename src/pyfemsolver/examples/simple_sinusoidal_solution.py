@@ -6,24 +6,25 @@ Can be used to compute an approximation error.
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
 from ..solverlib.space import H1Space
 from ..solverlib.solving import solve_bvp
 from ..visual.visual import show_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import VariableCoefficientFunction, ConstantCoefficientFunction
+from ..solverlib.forms import BilinearForm, LinearForm
+from ..solverlib.integrators import Laplace, Source
 
 
-def f1(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
+def f1(x: float, y: float) -> float:  # pylint:disable=C0116
     return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
-def f2(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
+def f2(x: float, y: float) -> float:  # pylint:disable=C0116
     return -np.sin(0.25 * np.pi * x) * np.sin(1.5 * np.pi * y)
 
 
-f_domain = VariableCoefficientFunction({1: f1, 2: f2})
+f_domain = VariableCoefficientFunction({1: f1, 2: f2}, f_shape=(1, 1))
 u_bnd = ConstantCoefficientFunction(0)
 f_mass = ConstantCoefficientFunction(0)
 
@@ -48,7 +49,14 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_me
     mesh = generate_mesh(geometry, max_gradient=0.07)
     space = H1Space(mesh, order)
 
-    u, mass, f_vector = solve_bvp(f_mass, 1, space, u_bnd, f_domain)
+    source = Source(coefficient=f_domain, space=space, is_boundary=False)
+    linearform = LinearForm([source])
+
+    laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
+    bilinearform = BilinearForm([laplace])
+
+    u = np.zeros((space.ndof, 1))
+    solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-0.05, 0.05), dx=plot_spacing, dy=plot_spacing)
     print(mini, maxi)
 plt.show()  # type:ignore

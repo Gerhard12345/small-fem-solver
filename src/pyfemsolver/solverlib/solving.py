@@ -5,11 +5,13 @@ solve by static condensation, and solve boundary value problems using H1 finite 
 
 import numpy as np
 from numpy.typing import NDArray
-from ..solverlib.space import H1Space
-from ..solverlib.coefficientfunction import CoefficientFunction
+from .space import H1Space
+from .coefficientfunction import CoefficientFunction, ConstantCoefficientFunction
+from .forms import LinearForm
+from .forms import BilinearForm
 
 
-def set_boundary_values(space: H1Space, g: CoefficientFunction):
+def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: CoefficientFunction):
     """
     Set boundary values for the finite element space.
 
@@ -24,7 +26,7 @@ def set_boundary_values(space: H1Space, g: CoefficientFunction):
     boundary_mass = np.matrix(np.zeros((space.ndof, space.ndof)))
     boundary_f_vector = np.zeros((space.ndof, 1))
     u_bnd = np.zeros((len(space.unique_boundary_dofs), 1))
-    space.assemble_boundary_mass(boundary_mass)
+    space.assemble_boundary_mass(boundary_mass, ConstantCoefficientFunction(1))
     space.assemble_boundary_element_vector(boundary_f_vector, g)
 
     X, Y = np.meshgrid(space.unique_boundary_dofs, space.unique_boundary_dofs)
@@ -42,7 +44,7 @@ def set_boundary_values(space: H1Space, g: CoefficientFunction):
         u_bnd[i] /= np.sqrt(boundary_mass_diag[i])
 
     print("done")
-    return u_bnd
+    dof_vector[space.unique_boundary_dofs] = u_bnd
 
 
 def solve_by_condensation(
@@ -88,28 +90,22 @@ def solve_by_condensation(
 
 
 def solve_bvp(
-    coeff_mass: CoefficientFunction,
-    a_2: float,
+    bilinearform: BilinearForm,
+    linearform: LinearForm,
+    u: NDArray[np.floating],
     space: H1Space,
-    g: CoefficientFunction,
-    f: CoefficientFunction,
     show_condition_number: bool = False,
 ):
-    mass = np.zeros((space.ndof, space.ndof))
-    gradu_gradv = np.zeros((space.ndof, space.ndof))
+    system_matrix = np.zeros((space.ndof, space.ndof))
     f_vector = np.zeros((space.ndof, 1))
-    u = np.zeros((space.ndof, 1))
+    # u = np.zeros((space.ndof, 1))
     print("Assembling")
-    space.assemble_mass(mass, coeff_mass)
-    space.assemble_gradu_gradv(gradu_gradv)
-    space.assemble_element_vector(f_vector, f)
+    bilinearform.assemble(system_matrix)
+    linearform.assemble(f_vector)
     print("Done")
-    # set boundary values
-    u[space.unique_boundary_dofs] = set_boundary_values(space, g)
 
     # the system matrix is the sum of all involved bilinear forms
     print("diagonally precondition")
-    system_matrix = mass + a_2 * gradu_gradv
     diag_system_matrix = np.diag(system_matrix).copy()
     print("got diag mass")
     # incoprorate bc on right side
@@ -132,4 +128,3 @@ def solve_bvp(
         u[i] /= np.sqrt(diag_system_matrix[i])
     if show_condition_number:
         print(f"Cond(system matrix) = {np.linalg.cond(system_matrix[space.inner_dofs,:][:,space.inner_dofs])}")
-    return u, system_matrix, f_vector

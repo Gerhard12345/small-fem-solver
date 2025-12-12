@@ -3,16 +3,17 @@
 from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
-from numpy.typing import NDArray
 from ..solverlib.space import H1Space
-from ..solverlib.solving import solve_bvp
+from ..solverlib.solving import solve_bvp, set_boundary_values
 from ..visual.visual import show_grid_function
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Line, Region, Geometry
 from ..solverlib.coefficientfunction import VariableCoefficientFunction, ConstantCoefficientFunction
+from ..solverlib.forms import BilinearForm, LinearForm
+from ..solverlib.integrators import Laplace
 
 
-def u_bnd(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:  # pylint:disable=C0116
+def u_bnd(x: float, y: float) -> float:  # pylint:disable=C0116
     return (x - 0.5) ** 3 + (y - 0.5) ** 3
 
 
@@ -37,6 +38,14 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     mesh = generate_mesh(geometry, max_gradient=0.07)
     space = H1Space(mesh, order)
 
-    u, mass2, f_vector2 = solve_bvp(f_mass, 1, space, g, f)
+    laplace = Laplace(ConstantCoefficientFunction(1), space, is_boundary=False)
+    bilinearform = BilinearForm([laplace])
+    linearform = LinearForm([])
+
+    # set boundary values
+    u = np.zeros((space.ndof, 1))
+    set_boundary_values(u, space, g)
+
+    solve_bvp(bilinearform, linearform, u, space)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-6.75, 0.25), dx=0.125, dy=0.125)
     plt.show()  # type:ignore

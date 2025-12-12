@@ -177,7 +177,7 @@ class H1Fel:
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
-    def calc_gradu_gradv_matrix(self, eltrans: ElementTransformationTrig) -> NDArray[np.floating]:
+    def calc_gradu_gradv_matrix(self, eltrans: ElementTransformationTrig, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the stiffness matrix (grad u, grad v) for the
         element defined by the given transformation.
@@ -193,11 +193,15 @@ class H1Fel:
         omega *= eltrans.getjacobian_determinant()
         omega = np.concatenate([omega, omega])
         dshape = self.dshape_functions(X, Y)
+        x_phys, y_phys = eltrans.transform_points(X, Y)
+        x_phys = np.concatenate([x_phys, x_phys])
+        y_phys = np.concatenate([y_phys, y_phys])
+        f_vals = f(x_phys, y_phys, eltrans.region)
         Jinv = eltrans.get_jacobian_inverse()
         for i in range(self.ndof):
             temp = dshape[i, :].reshape((2, len(omega) // 2))
             np.matmul(Jinv, temp, out=temp)
-        gradu_gradv = (dshape * omega.T) @ dshape.T
+        gradu_gradv = (dshape * omega.T) @ (f_vals * dshape.T)
         gradu_gradv[np.abs(gradu_gradv) < 1e-16] = 0
         return gradu_gradv
 
@@ -224,7 +228,7 @@ class H1Fel:
         element_vector[np.abs(element_vector) < 1e-16] = 0
         return element_vector
 
-    def calc_edge_mass_matrix(self, eltrans: ElementTransformationLine) -> NDArray[np.floating]:
+    def calc_edge_mass_matrix(self, eltrans: ElementTransformationLine, f: CoefficientFunction) -> NDArray[np.floating]:
         """
         Computes the mass matrix for an edge defined by the given transformation.
 
@@ -238,7 +242,9 @@ class H1Fel:
         X, omega = get_integration_rule_line(self.p + 1)
         omega *= eltrans.getjacobian_determinant()
         shape = self.edge_shape_functions(X)
-        mass = (shape * omega) @ shape.T
+        x_phys, y_phys = eltrans.transform_points(X)
+        f_vals = f(x_phys, y_phys, eltrans.region)
+        mass = (shape * omega) @ (f_vals * shape.T)
         mass[np.abs(mass) < 1e-16] = 0
         return mass
 
