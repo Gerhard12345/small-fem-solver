@@ -9,6 +9,7 @@ from .space import H1Space
 from .coefficientfunction import CoefficientFunction, ConstantCoefficientFunction
 from .forms import LinearForm
 from .forms import BilinearForm
+from .integrators import EdgeMass, EdgeSource
 
 
 def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: CoefficientFunction):
@@ -26,8 +27,10 @@ def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: Coe
     boundary_mass = np.matrix(np.zeros((space.ndof, space.ndof)))
     boundary_f_vector = np.zeros((space.ndof, 1))
     u_bnd = np.zeros((len(space.unique_boundary_dofs), 1))
-    space.assemble_boundary_mass(boundary_mass, ConstantCoefficientFunction(1))
-    space.assemble_boundary_element_vector(boundary_f_vector, g)
+    edge_mass = EdgeMass(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=True)
+    edge_mass.assemble(boundary_mass)
+    edge_source = EdgeSource(coefficient=g, space=space, is_boundary=True)
+    edge_source.assemble(boundary_f_vector)
 
     X, Y = np.meshgrid(space.unique_boundary_dofs, space.unique_boundary_dofs)
 
