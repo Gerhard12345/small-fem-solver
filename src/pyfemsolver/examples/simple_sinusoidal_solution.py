@@ -26,7 +26,6 @@ def f2(x: float, y: float) -> float:  # pylint:disable=C0116
 
 f_domain = VariableCoefficientFunction({1: f1, 2: f2}, f_shape=(1, 1))
 u_bnd = ConstantCoefficientFunction(0)
-f_mass = ConstantCoefficientFunction(0)
 
 orders = [1, 6]
 edge_mesh_sizes = [0.125, 1.25]

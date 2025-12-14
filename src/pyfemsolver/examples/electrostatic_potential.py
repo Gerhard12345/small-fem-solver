@@ -114,9 +114,6 @@ space = H1Space(mesh, 4)
 
 
 u_bound = DomainConstantCoefficientFunction(values={3: 100, 2: -100, 1: 0.0})
-f = ConstantCoefficientFunction(0)
-
-f_mass = ConstantCoefficientFunction(0)
 
 laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
 bilinearform = BilinearForm([laplace])

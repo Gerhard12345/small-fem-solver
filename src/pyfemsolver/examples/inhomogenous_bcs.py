@@ -18,9 +18,6 @@ def u_bnd(x: float, y: float) -> float:  # pylint:disable=C0116
 
 
 g = VariableCoefficientFunction({1: u_bnd, 2: u_bnd, 3: u_bnd, 4: u_bnd}, f_shape=(1, 1))
-f = ConstantCoefficientFunction(0)
-f_mass = ConstantCoefficientFunction(0)
-
 
 orders = [1, 4]
 edge_mesh_sizes = [0.4, 0.5]
