@@ -19,10 +19,10 @@ width = 2.4  # pylint:disable=C0103
 center_x = [0, 0]
 center_y = [-2, 2]
 lines: List[Line] = []
-lines.append(Line(start=(-6, -6), end=(6, -6), left_region=2, right_region=0, h=0.5, boundary_index=1))
-lines.append(Line(start=(6, -6), end=(6, 6), left_region=2, right_region=0, h=0.5, boundary_index=1))
-lines.append(Line(start=(6, 6), end=(-6, 6), left_region=2, right_region=0, h=0.5, boundary_index=1))
-lines.append(Line(start=(-6, 6), end=(-6, -6), left_region=2, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(-10, -10), end=(10, -10), left_region=2, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(10, -10), end=(10, 10), left_region=2, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(10, 10), end=(-10, 10), left_region=2, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(-10, 10), end=(-10, -10), left_region=2, right_region=0, h=0.5, boundary_index=1))
 
 lines.append(Line(start=(-4, -4), end=(4, -4), left_region=1, right_region=2, h=0.5, boundary_index=1))
 lines.append(Line(start=(4, -4), end=(4, 4), left_region=1, right_region=2, h=0.5, boundary_index=1))
@@ -112,7 +112,7 @@ lines.append(
         boundary_index=3,
     )
 )
-regions = [Region(region_id=1, mesh_inner=0.5),Region(region_id=2, mesh_inner=1.0)]
+regions = [Region(region_id=1, mesh_inner=0.5),Region(region_id=2, mesh_inner=1.)]
 geometry = Geometry(lines=lines, regions=regions)
 
 mesh = generate_mesh(geometry, max_gradient=0.07)
@@ -120,7 +120,7 @@ space = H1Space(mesh, 3)
 
 u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
 
-laplace = Laplace(coefficient=DomainConstantCoefficientFunction({1:0.05, 2:0.25}), space=space, is_boundary=False)
+laplace = Laplace(coefficient=DomainConstantCoefficientFunction({1:0.05, 2:0.2}), space=space, is_boundary=False)
 mass = Mass(coefficient=ConstantCoefficientFunction(-1), space=space, is_boundary=False)
 bilinearform = BilinearForm([laplace, mass])
 linearform = LinearForm([])
@@ -128,5 +128,5 @@ linearform = LinearForm([])
 u = np.zeros((space.ndof, 1))
 set_boundary_values(dof_vector=u, space=space, g=u_bound)
 solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
-ax, mini, maxi = show_grid_function(u, space, vrange=(-0.22, 0.22), dx=0.125, dy=0.125)
+ax, mini, maxi = show_grid_function(u, space, vrange=(-0.3, 0.3), dx=0.125, dy=0.125)
 plt.show()  # type:ignore
