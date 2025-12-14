@@ -14,15 +14,20 @@ from ..solverlib.coefficientfunction import DomainConstantCoefficientFunction, C
 from ..solverlib.forms import BilinearForm, LinearForm
 from ..solverlib.integrators import Laplace, Mass
 
-height = 0.6  # pylint:disable=C0103
-width = 2.4  # pylint:disable=C0103
-center_x = [0, 0]
-center_y = [-2, 2]
+height = 2.0  # pylint:disable=C0103
+width = 2.0  # pylint:disable=C0103
+center_x = 0
+center_y = 0
 lines: List[Line] = []
-lines.append(Line(start=(-10, -10), end=(10, -10), left_region=2, right_region=0, h=0.5, boundary_index=1))
-lines.append(Line(start=(10, -10), end=(10, 10), left_region=2, right_region=0, h=0.5, boundary_index=1))
-lines.append(Line(start=(10, 10), end=(-10, 10), left_region=2, right_region=0, h=0.5, boundary_index=1))
-lines.append(Line(start=(-10, 10), end=(-10, -10), left_region=2, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(-10, -10), end=(10, -10), left_region=3, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(10, -10), end=(10, 10), left_region=3, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(10, 10), end=(-10, 10), left_region=3, right_region=0, h=0.5, boundary_index=1))
+lines.append(Line(start=(-10, 10), end=(-10, -10), left_region=3, right_region=0, h=0.5, boundary_index=1))
+
+lines.append(Line(start=(-8, -8), end=(8, -8), left_region=2, right_region=3, h=0.5, boundary_index=1))
+lines.append(Line(start=(8, -8), end=(8, 8), left_region=2, right_region=3, h=0.5, boundary_index=1))
+lines.append(Line(start=(8, 8), end=(-8, 8), left_region=2, right_region=3, h=0.5, boundary_index=1))
+lines.append(Line(start=(-8, 8), end=(-8, -8), left_region=2, right_region=3, h=0.5, boundary_index=1))
 
 lines.append(Line(start=(-4, -4), end=(4, -4), left_region=1, right_region=2, h=0.5, boundary_index=1))
 lines.append(Line(start=(4, -4), end=(4, 4), left_region=1, right_region=2, h=0.5, boundary_index=1))
@@ -33,94 +38,56 @@ lines.append(Line(start=(-4, 4), end=(-4, -4), left_region=1, right_region=2, h=
 # Plate 1
 lines.append(
     Line(
-        start=(center_x[0] - width * 0.5, center_y[0] - height * 0.5),
-        end=(center_x[0] + width * 0.5, center_y[0] - height * 0.5),
+        start=(center_x - width * 0.5, center_y - height * 0.5),
+        end=(center_x + width * 0.5, center_y - height * 0.5),
         left_region=0,
         right_region=1,
-        h=0.2,
+        h=0.5,
         boundary_index=2,
     )
 )
 lines.append(
     Line(
-        start=(center_x[0] + width * 0.5, center_y[0] - height * 0.5),
-        end=(center_x[0] + width * 0.5, center_y[0] + height * 0.5),
+        start=(center_x + width * 0.5, center_y - height * 0.5),
+        end=(center_x + width * 0.5, center_y + height * 0.5),
         left_region=0,
         right_region=1,
-        h=0.2,
+        h=0.5,
         boundary_index=2,
     )
 )
 lines.append(
     Line(
-        start=(center_x[0] + width * 0.5, center_y[0] + height * 0.5),
-        end=(center_x[0] - width * 0.5, center_y[0] + height * 0.5),
+        start=(center_x + width * 0.5, center_y + height * 0.5),
+        end=(center_x - width * 0.5, center_y + height * 0.5),
         left_region=0,
         right_region=1,
-        h=0.2,
+        h=0.5,
         boundary_index=2,
     )
 )
 lines.append(
     Line(
-        start=(center_x[0] - width * 0.5, center_y[0] + height * 0.5),
-        end=(center_x[0] - width * 0.5, center_y[0] - height * 0.5),
+        start=(center_x - width * 0.5, center_y + height * 0.5),
+        end=(center_x - width * 0.5, center_y - height * 0.5),
         left_region=0,
         right_region=1,
-        h=0.2,
+        h=0.5,
         boundary_index=2,
     )
 )
-# Plate 2
-lines.append(
-    Line(
-        start=(center_x[1] - width * 0.5, center_y[1] - height * 0.5),
-        end=(center_x[1] + width * 0.5, center_y[1] - height * 0.5),
-        left_region=0,
-        right_region=1,
-        h=0.2,
-        boundary_index=3,
-    )
-)
-lines.append(
-    Line(
-        start=(center_x[1] + width * 0.5, center_y[1] - height * 0.5),
-        end=(center_x[1] + width * 0.5, center_y[1] + height * 0.5),
-        left_region=0,
-        right_region=1,
-        h=0.2,
-        boundary_index=3,
-    )
-)
-lines.append(
-    Line(
-        start=(center_x[1] + width * 0.5, center_y[1] + height * 0.5),
-        end=(center_x[1] - width * 0.5, center_y[1] + height * 0.5),
-        left_region=0,
-        right_region=1,
-        h=0.2,
-        boundary_index=3,
-    )
-)
-lines.append(
-    Line(
-        start=(center_x[1] - width * 0.5, center_y[1] + height * 0.5),
-        end=(center_x[1] - width * 0.5, center_y[1] - height * 0.5),
-        left_region=0,
-        right_region=1,
-        h=0.2,
-        boundary_index=3,
-    )
-)
-regions = [Region(region_id=1, mesh_inner=0.5),Region(region_id=2, mesh_inner=1.)]
+
+regions = [Region(region_id=1, mesh_inner=0.5),
+           Region(region_id=2, mesh_inner=0.75),
+           Region(region_id=3, mesh_inner=0.5)]
 geometry = Geometry(lines=lines, regions=regions)
 
-mesh = generate_mesh(geometry, max_gradient=0.07)
-space = H1Space(mesh, 3)
+mesh = generate_mesh(geometry, max_gradient=0.05)
+space = H1Space(mesh, 4)
 
-u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
+u_bound = DomainConstantCoefficientFunction(values={2: 1.0, 1: 0.0})
 
-laplace = Laplace(coefficient=DomainConstantCoefficientFunction({1:0.05, 2:0.2}), space=space, is_boundary=False)
+laplace = Laplace(coefficient=DomainConstantCoefficientFunction({1:0.05, 2:0.15, 3:0.05}), space=space, is_boundary=False)
 mass = Mass(coefficient=ConstantCoefficientFunction(-1), space=space, is_boundary=False)
 bilinearform = BilinearForm([laplace, mass])
 linearform = LinearForm([])
@@ -128,5 +95,5 @@ linearform = LinearForm([])
 u = np.zeros((space.ndof, 1))
 set_boundary_values(dof_vector=u, space=space, g=u_bound)
 solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
-ax, mini, maxi = show_grid_function(u, space, vrange=(-0.3, 0.3), dx=0.125, dy=0.125)
+ax, mini, maxi = show_grid_function(u, space, vrange=(-1.75, 1.8), dx=0.125, dy=0.125)
 plt.show()  # type:ignore

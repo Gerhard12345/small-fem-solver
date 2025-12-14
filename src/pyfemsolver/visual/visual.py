@@ -15,6 +15,14 @@ from ..solverlib.space import H1Space
 from ..solverlib.elementtransformation import ElementTransformationTrig
 
 
+def show_mesh(tri: Triangulation, ax):
+    trigs = [trig.points for trig in tri.trigs]
+    x_coords = [point.coordinates[0] for point in tri.points]
+    y_coords = [point.coordinates[1] for point in tri.points]
+    ax.triplot(x_coords, y_coords, trigs)  # type: ignore
+    ax.plot(x_coords, y_coords, "o")  # type: ignore
+
+
 def show_grid_function(
     u: NDArray[np.floating], space: H1Space, vrange: Tuple[float, float], dx: float = 0.01, dy: float = 0.01
 ) -> Tuple[Axes, float, float]:
@@ -68,11 +76,6 @@ def show_grid_function(
             vmin=vrange[0],
             vmax=vrange[1],
         )
-    trigs = [trig.points for trig in space.tri.trigs]
-    x_coords = [point.coordinates[0] for point in space.tri.points]
-    y_coords = [point.coordinates[1] for point in space.tri.points]
-    ax.triplot(x_coords, y_coords, trigs)  # type: ignore
-    ax.plot(x_coords, y_coords, "o")  # type: ignore
     print(f"Minimum value of grid function = {min_val}, maximum value of shape function = {max_val}")
     return ax, min_val, max_val
 
