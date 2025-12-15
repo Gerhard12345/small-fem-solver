@@ -109,7 +109,7 @@ regions = [Region(region_id=1, mesh_inner=0.5)]
 geometry = Geometry(lines=lines, regions=regions)
 
 mesh = generate_mesh(geometry, max_gradient=0.07)
-space = H1Space(mesh, 3)
+space = H1Space(mesh, 3, dirichlet_indices=[1, 2, 3])
 
 u_bound = DomainConstantCoefficientFunction(values={3: 0.1, 2: -0.1, 1: 0.0})
 

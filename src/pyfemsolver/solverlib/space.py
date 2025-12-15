@@ -6,17 +6,16 @@ import numpy as np
 from numpy.typing import NDArray
 
 from .element import H1Fel
-from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .meshing import Triangulation
-from .coefficientfunction import CoefficientFunction
 
 
 class H1Space:
-    """H1 Finite element space class. Manages elements, dofs, and assembly."""
+    """H1 Finite element space class. Manages elements and dofs."""
 
-    def __init__(self, tri: Triangulation, p: int):
+    def __init__(self, tri: Triangulation, p: int, dirichlet_indices: List[int]):
         self.tri = tri
         self.p = p
+        self.dirichlet_indices = dirichlet_indices
         # For each triangle the list contains a Finite element:
         self.elements: List[H1Fel] = [H1Fel(order=p) for _ in range(len(tri.trigs))]
         # The number of vertex dofs is equal to the number of vertices in the triangulation
@@ -59,6 +58,7 @@ class H1Space:
             )
 
         boundary_dofs: List[List[int]] = [[]] * len(self.tri.boundary_edges)
+        dirichlet_dofs: List[int] = []
         for i, edge in enumerate(tri.boundary_edges):
             neighbour = edge.neighbouring_elements[0]
             boundary_dofs[i] = list(edge.points)
@@ -68,11 +68,15 @@ class H1Space:
                     for s in range(self.elements[neighbour].ndof_facet)
                 ]
             )
+            if edge.region in self.dirichlet_indices:
+                dirichlet_dofs.extend(boundary_dofs[i])
 
         self.boundary_dofs = boundary_dofs  # dofs assoziated with the domain boundary
         self.dofs = dofs  # all dofs
+        self.dirichlet_dofs = sorted(list(set(dirichlet_dofs)))
         self.unique_boundary_dofs = sorted(list(set([dof for dofs in self.boundary_dofs for dof in dofs])))
         self.inner_dofs = [i for i in range(self.ndof) if i not in self.unique_boundary_dofs]
+        self.free_dofs = [i for i in range(self.ndof) if i not in self.dirichlet_dofs]
 
     def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: NDArray[np.floating], trig_index: int):
         """

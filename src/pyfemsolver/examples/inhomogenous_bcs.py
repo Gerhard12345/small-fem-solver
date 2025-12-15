@@ -33,7 +33,7 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     geometry = Geometry(lines=lines, regions=regions)
 
     mesh = generate_mesh(geometry, max_gradient=0.07)
-    space = H1Space(mesh, order)
+    space = H1Space(mesh, order, dirichlet_indices=[1, 2, 3, 4])
 
     laplace = Laplace(ConstantCoefficientFunction(1), space, is_boundary=False)
     bilinearform = BilinearForm([laplace])

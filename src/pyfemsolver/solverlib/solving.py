@@ -68,9 +68,9 @@ def solve_by_condensation(
     :rtype: NDArray[np.floating]
     """
     print("Solve by static condensation")
-    u = np.matrix(np.zeros((len(space.inner_dofs), 1)))
+    u = np.matrix(np.zeros((len(space.free_dofs), 1)))
     ndof_bubble = 1 / 2 * len(space.tri.trigs) * (space.p - 1) * (space.p - 2)
-    ndof_edge = int(len(space.inner_dofs) - ndof_bubble)
+    ndof_edge = int(len(space.free_dofs) - ndof_bubble)
     a_ee = system_matrix[:ndof_edge, :ndof_edge]
     a_ii = system_matrix[ndof_edge:, ndof_edge:]
     a_ei = system_matrix[ndof_edge:, :ndof_edge]
@@ -116,18 +116,18 @@ def solve_bvp(
     f_vector -= boundary_contribution
     print("updated boundary condition")
     # diagonally scale system matrix and rhs
-    for i in space.inner_dofs:
+    for i in space.free_dofs:
         f_vector[i] /= np.sqrt(diag_system_matrix[i])
         # for j in space.inner_dofs:
         system_matrix[i, :] /= np.sqrt(diag_system_matrix[i])
         system_matrix[:, i] /= np.sqrt(diag_system_matrix[i])
     print("done")
     # solve
-    u[space.inner_dofs] = solve_by_condensation(
-        space, system_matrix[space.inner_dofs, :][:, space.inner_dofs], f_vector[space.inner_dofs], show_condition_number
+    u[space.free_dofs] = solve_by_condensation(
+        space, system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs], show_condition_number
     )
     # diagonally unscale solution
-    for i in space.inner_dofs:
+    for i in space.free_dofs:
         u[i] /= np.sqrt(diag_system_matrix[i])
     if show_condition_number:
-        print(f"Cond(system matrix) = {np.linalg.cond(system_matrix[space.inner_dofs,:][:,space.inner_dofs])}")
+        print(f"Cond(system matrix) = {np.linalg.cond(system_matrix[space.free_dofs,:][:,space.free_dofs])}")

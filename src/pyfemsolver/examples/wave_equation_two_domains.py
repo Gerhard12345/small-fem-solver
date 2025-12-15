@@ -77,17 +77,15 @@ lines.append(
     )
 )
 
-regions = [Region(region_id=1, mesh_inner=0.5),
-           Region(region_id=2, mesh_inner=0.75),
-           Region(region_id=3, mesh_inner=0.5)]
+regions = [Region(region_id=1, mesh_inner=0.5), Region(region_id=2, mesh_inner=0.75), Region(region_id=3, mesh_inner=0.5)]
 geometry = Geometry(lines=lines, regions=regions)
 
 mesh = generate_mesh(geometry, max_gradient=0.05)
-space = H1Space(mesh, 4)
+space = H1Space(mesh, 4, dirichlet_indices=[1, 2])
 
 u_bound = DomainConstantCoefficientFunction(values={2: 1.0, 1: 0.0})
 
-laplace = Laplace(coefficient=DomainConstantCoefficientFunction({1:0.05, 2:0.15, 3:0.05}), space=space, is_boundary=False)
+laplace = Laplace(coefficient=DomainConstantCoefficientFunction({1: 0.05, 2: 0.15, 3: 0.05}), space=space, is_boundary=False)
 mass = Mass(coefficient=ConstantCoefficientFunction(-1), space=space, is_boundary=False)
 bilinearform = BilinearForm([laplace, mass])
 linearform = LinearForm([])
