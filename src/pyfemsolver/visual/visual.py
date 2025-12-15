@@ -67,7 +67,7 @@ def show_grid_function(
         min_val = np.min([min_val, np.min(values)])
         max_val = np.max([max_val, np.max(values)])
         levels = np.linspace(vrange[0], vrange[1], 20)
-        ax.contourf(  # type: ignore
+        c = ax.contourf(  # type: ignore
             trig_nodes[0, :].reshape(len(x), len(y)),
             trig_nodes[1, :].reshape(len(x), len(y)),
             values.reshape(len(x), len(y)),
@@ -76,7 +76,9 @@ def show_grid_function(
             vmin=vrange[0],
             vmax=vrange[1],
         )
+    fig.colorbar(c)
     print(f"Minimum value of grid function = {min_val}, maximum value of shape function = {max_val}")
+
     return ax, min_val, max_val
 
 
@@ -245,7 +247,7 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
         max_val = np.max([max_val, np.max(dx_vals), np.max(dy_vals)])
         levels = np.linspace(vrange[0], vrange[1], 20)
         # Plot x-gradient
-        ax_dx.contourf(  # type: ignore
+        c1 = ax_dx.contourf(  # type: ignore
             trig_nodes[0, :].reshape(len(x), len(y)),
             trig_nodes[1, :].reshape(len(x), len(y)),
             dx_vals.reshape(len(x), len(y)),
@@ -256,7 +258,7 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
         )
 
         # Plot y-gradient
-        ax_dy.contourf(  # type: ignore
+        c2 = ax_dy.contourf(  # type: ignore
             trig_nodes[0, :].reshape(len(x), len(y)),
             trig_nodes[1, :].reshape(len(x), len(y)),
             dy_vals.reshape(len(x), len(y)),
@@ -268,5 +270,6 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
 
     ax_dx.set_title("∂u/∂x")  # type: ignore
     ax_dy.set_title("∂u/∂y")  # type: ignore
-
+    fig.colorbar(c1)
+    fig.colorbar(c2)
     return ax_dx, ax_dy, min_val, max_val
