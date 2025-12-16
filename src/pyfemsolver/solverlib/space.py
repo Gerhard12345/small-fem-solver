@@ -133,3 +133,14 @@ class H1Space:
         :return: None
         """
         global_vector[self.boundary_dofs[edge_index]] += element_vector
+
+    def create_gridfunction(self) -> NDArray[np.floating]:
+        """
+        Docstring for create_gridfunction
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :return: The dof vector representing the gridfunction
+        :rtype: NDArray[floating[Any]]
+        """
+        return np.zeros((self.ndof, 1))

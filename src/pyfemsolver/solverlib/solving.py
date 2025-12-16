@@ -101,7 +101,6 @@ def solve_bvp(
 ):
     system_matrix = np.zeros((space.ndof, space.ndof))
     f_vector = np.zeros((space.ndof, 1))
-    # u = np.zeros((space.ndof, 1))
     print("Assembling")
     bilinearform.assemble(system_matrix)
     linearform.assemble(f_vector)

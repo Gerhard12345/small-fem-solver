@@ -58,7 +58,7 @@ for order, edge_mesh_size, domain_mesh_size, n_subdivision, dirichlet_indices, p
     laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
     bilinearform = BilinearForm([laplace])
 
-    u = np.zeros((space.ndof, 1))
+    u = space.create_gridfunction()
     solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
     ax, mini, maxi = show_grid_function(u, space, vrange=plot_range, n_subdivision=n_subdivision)
 plt.show()  # type:ignore

@@ -3,8 +3,6 @@
 from typing import List
 import matplotlib.pyplot as plt
 
-import numpy as np
-
 from ..solverlib.space import H1Space
 from ..solverlib.solving import solve_bvp, set_boundary_values
 from ..visual.visual import show_grid_function
@@ -90,7 +88,7 @@ mass = Mass(coefficient=ConstantCoefficientFunction(-1), space=space, is_boundar
 bilinearform = BilinearForm([laplace, mass])
 linearform = LinearForm([])
 
-u = np.zeros((space.ndof, 1))
+u = space.create_gridfunction()
 set_boundary_values(dof_vector=u, space=space, g=u_bound)
 solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
 ax, mini, maxi = show_grid_function(u, space, vrange=(-1.75, 1.8), n_subdivision=16)
