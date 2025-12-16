@@ -74,8 +74,6 @@ class H1Space:
         self.boundary_dofs = boundary_dofs  # dofs assoziated with the domain boundary
         self.dofs = dofs  # all dofs
         self.dirichlet_dofs = sorted(list(set(dirichlet_dofs)))
-        self.unique_boundary_dofs = self.dirichlet_dofs  # sorted(list(set([dof for dofs in self.boundary_dofs for dof in dofs])))
-        # self.inner_dofs = [i for i in range(self.ndof) if i not in self.unique_boundary_dofs]
         self.free_dofs = [i for i in range(self.ndof) if i not in self.dirichlet_dofs]
 
     def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: NDArray[np.floating], trig_index: int):
@@ -135,3 +133,14 @@ class H1Space:
         :return: None
         """
         global_vector[self.boundary_dofs[edge_index]] += element_vector
+
+    def create_gridfunction(self) -> NDArray[np.floating]:
+        """
+        Docstring for create_gridfunction
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :return: The dof vector representing the gridfunction
+        :rtype: NDArray[floating[Any]]
+        """
+        return np.zeros((self.ndof, 1))

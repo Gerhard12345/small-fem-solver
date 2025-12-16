@@ -30,8 +30,8 @@ u_bnd = ConstantCoefficientFunction(0)
 orders = [1, 6]
 edge_mesh_sizes = [0.125, 1.25]
 domain_mesh_sizes = [[0.125, 0.25], [0.5, 1.0]]
-plot_spacings = [1.0, 0.1]
-for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_mesh_sizes, domain_mesh_sizes, plot_spacings):
+n_subdivisions = [2, 20]
+for order, edge_mesh_size, domain_mesh_size, n_subdivision in zip(orders, edge_mesh_sizes, domain_mesh_sizes, n_subdivisions):
     lines: List[Line] = []
     lines.append(Line(start=(0, 0), end=(2, 0), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
     lines.append(Line(start=(2, 0), end=(2, 2), left_region=1, right_region=2, h=edge_mesh_size, boundary_index=1))
@@ -54,8 +54,8 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing in zip(orders, edge_me
     laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
     bilinearform = BilinearForm([laplace])
 
-    u = np.zeros((space.ndof, 1))
+    u = space.create_gridfunction()
     solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
-    ax, mini, maxi = show_grid_function(u, space, vrange=(-0.05, 0.05), dx=plot_spacing, dy=plot_spacing)
+    ax, mini, maxi = show_grid_function(u, space, vrange=(-0.05, 0.05), n_subdivision=n_subdivision)
     print(mini, maxi)
 plt.show()  # type:ignore

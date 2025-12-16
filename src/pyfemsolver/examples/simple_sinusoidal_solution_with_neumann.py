@@ -30,11 +30,11 @@ u_bnd = ConstantCoefficientFunction(0)
 orders = [6, 6]
 edge_mesh_sizes = [1.25, 1.25]
 domain_mesh_sizes = [[1.0, 1.0], [1.0, 1.0]]
-plot_spacings = [0.05, 0.05]
+n_subdivisions = [40, 40]
 all_dirichlet_indices = [[2, 3], [1]]
-plot_ranges = [(-0.053, 0.053), (-0.042, 0.042)]
-for order, edge_mesh_size, domain_mesh_size, plot_spacing, dirichlet_indices, plot_range in zip(
-    orders, edge_mesh_sizes, domain_mesh_sizes, plot_spacings, all_dirichlet_indices, plot_ranges
+plot_ranges = [(-0.042, 0.042), (-0.055, 0.055)]
+for order, edge_mesh_size, domain_mesh_size, n_subdivision, dirichlet_indices, plot_range in zip(
+    orders, edge_mesh_sizes, domain_mesh_sizes, n_subdivisions, all_dirichlet_indices, plot_ranges
 ):
     lines: List[Line] = []
     lines.append(Line(start=(0, 0), end=(2, 0), left_region=1, right_region=0, h=edge_mesh_size, boundary_index=1))
@@ -58,8 +58,7 @@ for order, edge_mesh_size, domain_mesh_size, plot_spacing, dirichlet_indices, pl
     laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
     bilinearform = BilinearForm([laplace])
 
-    u = np.zeros((space.ndof, 1))
+    u = space.create_gridfunction()
     solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
-    ax, mini, maxi = show_grid_function(u, space, vrange=plot_range, dx=plot_spacing, dy=plot_spacing)
-    print(mini, maxi)
+    ax, mini, maxi = show_grid_function(u, space, vrange=plot_range, n_subdivision=n_subdivision)
 plt.show()  # type:ignore

@@ -26,28 +26,28 @@ def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: Coe
     print("set boundary vals")
     boundary_mass = np.matrix(np.zeros((space.ndof, space.ndof)))
     boundary_f_vector = np.zeros((space.ndof, 1))
-    u_bnd = np.zeros((len(space.unique_boundary_dofs), 1))
+    u_bnd = np.zeros((len(space.dirichlet_dofs), 1))
     edge_mass = EdgeMass(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=True)
     edge_mass.assemble(boundary_mass)
     edge_source = EdgeSource(coefficient=g, space=space, is_boundary=True)
     edge_source.assemble(boundary_f_vector)
 
-    X, Y = np.meshgrid(space.unique_boundary_dofs, space.unique_boundary_dofs)
+    X, Y = np.meshgrid(space.dirichlet_dofs, space.dirichlet_dofs)
 
     boundary_mass = boundary_mass[Y, X]
-    boundary_f_vector = boundary_f_vector[space.unique_boundary_dofs]
+    boundary_f_vector = boundary_f_vector[space.dirichlet_dofs]
     boundary_mass_diag = np.diag(boundary_mass).copy()
 
-    for i in range(len(space.unique_boundary_dofs)):
+    for i in range(len(space.dirichlet_dofs)):
         boundary_f_vector[i] /= np.sqrt(boundary_mass_diag[i])
-        for j in range(len(space.unique_boundary_dofs)):
+        for j in range(len(space.dirichlet_dofs)):
             boundary_mass[i, j] /= np.sqrt(boundary_mass_diag[i]) * np.sqrt(boundary_mass_diag[j])
     u_bnd = boundary_mass**-1 * boundary_f_vector
-    for i in range(len(space.unique_boundary_dofs)):
+    for i in range(len(space.dirichlet_dofs)):
         u_bnd[i] /= np.sqrt(boundary_mass_diag[i])
 
     print("done")
-    dof_vector[space.unique_boundary_dofs] = u_bnd
+    dof_vector[space.dirichlet_dofs] = u_bnd
 
 
 def solve_by_condensation(
@@ -101,7 +101,6 @@ def solve_bvp(
 ):
     system_matrix = np.zeros((space.ndof, space.ndof))
     f_vector = np.zeros((space.ndof, 1))
-    # u = np.zeros((space.ndof, 1))
     print("Assembling")
     bilinearform.assemble(system_matrix)
     linearform.assemble(f_vector)
@@ -112,7 +111,7 @@ def solve_bvp(
     diag_system_matrix = np.diag(system_matrix).copy()
     print("got diag mass")
     # incoprorate bc on right side
-    boundary_contribution = system_matrix[:, space.unique_boundary_dofs] @ u[space.unique_boundary_dofs]
+    boundary_contribution = system_matrix[:, space.dirichlet_dofs] @ u[space.dirichlet_dofs]
     f_vector -= boundary_contribution
     print("updated boundary condition")
     # diagonally scale system matrix and rhs

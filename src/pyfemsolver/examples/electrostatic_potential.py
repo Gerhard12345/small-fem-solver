@@ -3,7 +3,6 @@
 from typing import List
 
 import matplotlib.pyplot as plt
-import numpy as np
 
 from ..solverlib.space import H1Space
 from ..solverlib.solving import solve_bvp, set_boundary_values
@@ -117,10 +116,10 @@ for dirichlet_indices in ([1, 2, 3], [2, 3]):
     laplace = Laplace(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=False)
     bilinearform = BilinearForm([laplace])
 
-    u = np.zeros((space.ndof, 1))
+    u = space.create_gridfunction()
     set_boundary_values(dof_vector=u, space=space, g=u_bound)
 
     solve_bvp(bilinearform=bilinearform, linearform=LinearForm([]), u=u, space=space)
-    ax, mini, maxi = show_grid_function(u, space, vrange=(-100, 100), dx=0.05, dy=0.05)
-    ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u, space, vrange=(-100, 100), dx=0.05, dy=0.05)
+    ax, mini, maxi = show_grid_function(u, space, vrange=(-100, 100), n_subdivision=40)
+    ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u, space, vrange=(-100, 100), n_subdivision=40)
 plt.show()  # type:ignore
