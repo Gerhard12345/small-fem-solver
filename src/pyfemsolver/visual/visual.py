@@ -15,7 +15,7 @@ from ..solverlib.space import H1Space
 from ..solverlib.elementtransformation import ElementTransformationTrig
 
 
-def show_mesh(tri: Triangulation, ax):
+def show_mesh(tri: Triangulation, ax: Axes):
     trigs = [trig.points for trig in tri.trigs]
     x_coords = [point.coordinates[0] for point in tri.points]
     y_coords = [point.coordinates[1] for point in tri.points]
@@ -24,7 +24,7 @@ def show_mesh(tri: Triangulation, ax):
 
 
 def show_grid_function(
-    u: NDArray[np.floating], space: H1Space, vrange: Tuple[float, float], dx: float = 0.01, dy: float = 0.01
+    u: NDArray[np.floating], space: H1Space, vrange: Tuple[float, float], n_subdivision: int = 3
 ) -> Tuple[Axes, float, float]:
     """
     Display a grid function as a 3D surface plot.
@@ -47,8 +47,8 @@ def show_grid_function(
     min_val: float = 1e16
     max_val: float = -1e16
     for i, trig in enumerate(space.tri.trigs):
-        x = np.arange(-1, 1 + dx, dx)
-        y = np.arange(-1, 1 + dy, dy)
+        x = np.linspace(-1, 1, n_subdivision)
+        y = np.linspace(-1, 1, n_subdivision)
         X, Y = np.meshgrid(x, y)
         X_t, Y_t = duffy(X, Y)
         X_t = X_t.reshape(X_t.size)
@@ -76,13 +76,13 @@ def show_grid_function(
             vmin=vrange[0],
             vmax=vrange[1],
         )
-    fig.colorbar(c)
-    print(f"Minimum value of grid function = {min_val}, maximum value of shape function = {max_val}")
+    fig.colorbar(c)  # type:ignore
+    print(f"Minimum value of grid function = {min_val}, maximum value of grid function = {max_val}")
 
     return ax, min_val, max_val
 
 
-def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], dx: float = 0.3, dy: float = 0.3) -> Tuple[Axes, float, float]:
+def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], n_subdivision: int = 3) -> Tuple[Axes, float, float]:
     """
     Display the shape function corresponding to a given degree of freedom number.
 
@@ -100,7 +100,7 @@ def show_shape(dof_number: int, space: H1Space, vrange: Tuple[float, float], dx:
     """
     u = np.zeros((space.ndof, 1))
     u[dof_number, 0] = 1
-    ax, mini, maxi = show_grid_function(u, space, vrange, dx, dy)
+    ax, mini, maxi = show_grid_function(u, space, vrange, n_subdivision)
     ax.set_title(f"dof number = {dof_number}")  # type: ignore
     return ax, mini, maxi
 
@@ -166,7 +166,7 @@ def show_boundary_function(g: Callable[[NDArray[np.floating], NDArray[np.floatin
         ax.plot(xy[:, 0], xy[:, 1], vals, linewidth=7)  # type: ignore
 
 
-def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vrange: Tuple[int, int], dx: float = 0.01, dy: float = 0.01):
+def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vrange: Tuple[int, int], n_subdivision: int = 3):
     """Display x and y components of the gradient of a grid function as surfaces.
 
     Creates a figure with two 3D surface plots side-by-side:
@@ -206,8 +206,8 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
     max_val = -1e16
 
     for i, trig in enumerate(space.tri.trigs):
-        x = np.arange(-1, 1 + dx, dx)
-        y = np.arange(-1, 1 + dy, dy)
+        x = np.linspace(-1, 1, n_subdivision)
+        y = np.linspace(-1, 1, n_subdivision)
         X, Y = np.meshgrid(x, y)
         X_t, Y_t = duffy(X, Y)
         s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())

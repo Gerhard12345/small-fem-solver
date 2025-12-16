@@ -44,5 +44,5 @@ for order, edge_mesh_size, domain_mesh_size in zip(orders, edge_mesh_sizes, doma
     set_boundary_values(u, space, g)
 
     solve_bvp(bilinearform, linearform, u, space)
-    ax, mini, maxi = show_grid_function(u, space, vrange=(-6.75, 0.25), dx=0.125, dy=0.125)
+    ax, mini, maxi = show_grid_function(u, space, vrange=(-6.75, 0.25), n_subdivision=16)
     plt.show()  # type:ignore

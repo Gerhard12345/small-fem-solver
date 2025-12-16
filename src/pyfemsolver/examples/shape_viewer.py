@@ -4,7 +4,7 @@ from typing import List
 import matplotlib.pyplot as plt
 import numpy as np
 from ..solverlib.space import H1Space
-from ..visual.visual import show_shape, show_edge_shape
+from ..visual.visual import show_shape, show_edge_shape, show_mesh
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Geometry, Line, Region
 
@@ -24,9 +24,10 @@ geometry = Geometry(lines=lines, regions=regions)
 t = generate_mesh(geometry, max_gradient=0.4)
 
 
-space = H1Space(t, 3)
+space = H1Space(t, 3, dirichlet_indices=[])
 u = np.zeros((space.ndof, 1))
 dof = 38  # pylint:disable=C0103
-ax, mini, maxi = show_shape(dof, space, vrange=(-0.192, 0.192), dx=0.025, dy=0.025)
+ax, mini, maxi = show_shape(dof, space, vrange=(-0.192, 0.192), n_subdivision=80)
+show_mesh(tri=t, ax=ax)
 show_edge_shape(15, space)
 plt.show()  # type:ignore
