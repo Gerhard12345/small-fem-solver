@@ -17,11 +17,11 @@ from ..solverlib.integrators import Laplace, Source
 
 
 def f1(x: float, y: float) -> float:  # pylint:disable=C0116
-    return np.sin(0.75 * np.pi * x) * np.sin(1.5 * np.pi * y)
+    return np.sin(0.75 * np.pi * x) * np.cos(1.5 * np.pi * y)
 
 
 def f2(x: float, y: float) -> float:  # pylint:disable=C0116
-    return -np.sin(0.25 * np.pi * x) * np.sin(1.5 * np.pi * y)
+    return -np.sin(0.25 * np.pi * x) * np.cos(1.5 * np.pi * y)
 
 
 f_domain = VariableCoefficientFunction({1: f1, 2: f2}, f_shape=(1, 1))
@@ -32,7 +32,7 @@ edge_mesh_sizes = [1.25, 1.25]
 domain_mesh_sizes = [[1.0, 1.0], [1.0, 1.0]]
 plot_spacings = [0.05, 0.05]
 all_dirichlet_indices = [[2, 3], [1]]
-plot_ranges = [(-0.26, 0.032), (-0.042, 0.042)]
+plot_ranges = [(-0.053, 0.053), (-0.042, 0.042)]
 for order, edge_mesh_size, domain_mesh_size, plot_spacing, dirichlet_indices, plot_range in zip(
     orders, edge_mesh_sizes, domain_mesh_sizes, plot_spacings, all_dirichlet_indices, plot_ranges
 ):
