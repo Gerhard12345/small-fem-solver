@@ -5,6 +5,8 @@ solve by static condensation, and solve boundary value problems using H1 finite 
 
 import numpy as np
 from numpy.typing import NDArray
+import time
+from scipy.sparse import linalg
 from .space import H1Space
 from .coefficientfunction import CoefficientFunction, ConstantCoefficientFunction
 from .forms import LinearForm
@@ -24,7 +26,7 @@ def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: Coe
     :rtype: NDArray[np.floating]
     """
     print("set boundary vals")
-    boundary_mass = np.matrix(np.zeros((space.ndof, space.ndof)))
+    boundary_mass = np.zeros((space.ndof, space.ndof))
     boundary_f_vector = np.zeros((space.ndof, 1))
     u_bnd = np.zeros((len(space.dirichlet_dofs), 1))
     edge_mass = EdgeMass(coefficient=ConstantCoefficientFunction(1), space=space, is_boundary=True)
@@ -42,12 +44,49 @@ def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: Coe
         boundary_f_vector[i] /= np.sqrt(boundary_mass_diag[i])
         for j in range(len(space.dirichlet_dofs)):
             boundary_mass[i, j] /= np.sqrt(boundary_mass_diag[i]) * np.sqrt(boundary_mass_diag[j])
-    u_bnd = boundary_mass**-1 * boundary_f_vector
+    u_bnd = np.linalg.inv(boundary_mass) @ boundary_f_vector
     for i in range(len(space.dirichlet_dofs)):
         u_bnd[i] /= np.sqrt(boundary_mass_diag[i])
 
     print("done")
     dof_vector[space.dirichlet_dofs] = u_bnd
+
+
+def invert_block_diagonal_matrix(a: NDArray[np.floating], block_size: int):
+    n_blocks = a.shape[0] // block_size
+    for block in range(n_blocks):
+        a[(block * block_size) : ((block + 1) * block_size), (block * block_size) : ((block + 1) * block_size)] = np.linalg.inv(
+            a[(block * block_size) : ((block + 1) * block_size), (block * block_size) : ((block + 1) * block_size)]
+        )
+
+
+def solve_linear_equations(a: NDArray[np.floating], f: NDArray[np.floating]) -> NDArray[np.floating]:
+    # u = np.zeros((a.shape[0],))
+    # f = f.reshape(f.size)
+    # r = f - a @ u
+    # d = r
+    # for k in range(3 * a.shape[0]):
+    #     z = a @ d
+    #     alpha = np.dot(r, r) / np.dot(d, r)
+    #     u += alpha * d
+    #     r_new = r - alpha * z
+    #     beta = np.dot(r_new, r_new) / np.dot(r, r)
+    #     d = r_new + beta * d
+    #     r = r_new
+    #     res = np.dot(r, a @ r)
+    #     print(res)
+    t0 = time.time()
+    direct_solve = True
+    if direct_solve:
+        print("Solving linear equations with direct solver")
+        u = np.linalg.inv(a) @ f
+    else:
+        print("Solving linear equations with cg solver")
+        u, n = linalg.cg(a, f)
+        u = u.reshape(u.size, 1)
+    t1 = time.time()
+    print(f"Inverted system in {t1-t0} seconds.")
+    return u
 
 
 def solve_by_condensation(
@@ -68,8 +107,9 @@ def solve_by_condensation(
     :rtype: NDArray[np.floating]
     """
     print("Solve by static condensation")
-    u = np.matrix(np.zeros((len(space.free_dofs), 1)))
-    ndof_bubble = 1 / 2 * len(space.tri.trigs) * (space.p - 1) * (space.p - 2)
+    u = np.zeros((len(space.free_dofs), 1))
+    bubble_functions_per_trig = int(1 / 2 * (space.p - 1) * (space.p - 2))
+    ndof_bubble = len(space.tri.trigs) * bubble_functions_per_trig
     ndof_edge = int(len(space.free_dofs) - ndof_bubble)
     a_ee = system_matrix[:ndof_edge, :ndof_edge]
     a_ii = system_matrix[ndof_edge:, ndof_edge:]
@@ -78,17 +118,16 @@ def solve_by_condensation(
     f_e = f_vector[:ndof_edge]
     f_i = f_vector[ndof_edge:]
     print("Invert bubble function matrix")
-    a_inner_inverse = np.linalg.inv(a_ii)
+    if space.p >= 3:
+        invert_block_diagonal_matrix(a_ii, block_size=bubble_functions_per_trig)
     print("done")
-    condensed_matrix = a_ee - a_ie @ a_inner_inverse @ a_ei
+    condensed_matrix = a_ee - a_ie @ a_ii @ a_ei
     if show_condition_number:
         print("Cond(condensed_matrix) = ", np.linalg.cond(condensed_matrix))
-    condensed_f = f_e - a_ie @ a_inner_inverse @ f_i
-    print("inverting")
-    u[:ndof_edge] = np.linalg.inv(condensed_matrix) @ condensed_f
-    print("done inverting")
-    u[ndof_edge:] = a_inner_inverse @ (f_i - a_ei @ u[:ndof_edge])
-    print("done, max(|S*u-f|) = ", np.max(np.abs(system_matrix * u - f_vector)))
+    condensed_f = f_e - a_ie @ a_ii @ f_i
+    u[:ndof_edge] = solve_linear_equations(condensed_matrix, condensed_f)
+    u[ndof_edge:] = a_ii @ (f_i - a_ei @ u[:ndof_edge])
+    print("max(|S*u-f|) = ", np.max(np.abs(system_matrix @ u - f_vector)))
     return u
 
 
@@ -120,11 +159,14 @@ def solve_bvp(
         # for j in space.inner_dofs:
         system_matrix[i, :] /= np.sqrt(diag_system_matrix[i])
         system_matrix[:, i] /= np.sqrt(diag_system_matrix[i])
-    print("done")
     # solve
-    u[space.free_dofs] = solve_by_condensation(
-        space, system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs], show_condition_number
-    )
+    use_static_condensation = True
+    if use_static_condensation:
+        u[space.free_dofs] = solve_by_condensation(
+            space, system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs], show_condition_number
+        )
+    else:
+        u[space.free_dofs] = solve_linear_equations(system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs])
     # diagonally unscale solution
     for i in space.free_dofs:
         u[i] /= np.sqrt(diag_system_matrix[i])
