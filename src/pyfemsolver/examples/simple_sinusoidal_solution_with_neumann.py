@@ -32,7 +32,7 @@ edge_mesh_sizes = [1.25, 1.25]
 domain_mesh_sizes = [[1.0, 1.0], [1.0, 1.0]]
 n_subdivisions = [40, 40]
 all_dirichlet_indices = [[2, 3], [1]]
-plot_ranges = [(-0.042, 0.042), (-0.0536, 0.0536)]
+plot_ranges = [(-0.042, 0.042), (-0.055, 0.055)]
 for order, edge_mesh_size, domain_mesh_size, n_subdivision, dirichlet_indices, plot_range in zip(
     orders, edge_mesh_sizes, domain_mesh_sizes, n_subdivisions, all_dirichlet_indices, plot_ranges
 ):
