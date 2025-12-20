@@ -77,7 +77,7 @@ class H1Space:
         self.dirichlet_dofs = sorted(list(set(dirichlet_dofs)))
         self.free_dofs = [i for i in range(self.ndof) if i not in self.dirichlet_dofs]
 
-    def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: NDArray[np.floating], trig_index: int):
+    def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: csr_array, trig_index: int):
         """
         Map the local element dofs to the global ones for matrices.
 
@@ -92,7 +92,7 @@ class H1Space:
         dx, dy = np.meshgrid(self.dofs[trig_index], self.dofs[trig_index])
         global_matrix[dy, dx] += element_matrix
 
-    def local_to_global_boundary(self, element_matrix: NDArray[np.floating], global_matrix: NDArray[np.floating], edge_index: int):
+    def local_to_global_boundary(self, element_matrix: NDArray[np.floating], global_matrix: csr_array, edge_index: int):
         """
         Map the local boundary dofs to the global ones for matrices.
 
@@ -146,16 +146,17 @@ class H1Space:
         """
         return np.zeros((self.ndof, 1))
 
-    def compute_csr_indices(self) -> Tuple[List[int], List[int]]:
-        c = []
-        r = []
-        for ldofs in self.dofs:
+    def _get_sparse_coordinates(self) -> Tuple[List[int], List[int]]:
+        cols = []
+        rows = []
+        for local_dofs in self.dofs:
+            ldofs = [dof for dof in local_dofs if dof not in self.boundary_dofs]
             lcol = list(np.matlib.repmat(ldofs, 1, len(ldofs)).reshape(-1))
             lrow = list(np.repeat(ldofs, len(ldofs)))
-            c.extend(lcol)
-            r.extend(lrow)
-        return c, r
+            cols.extend(lcol)
+            rows.extend(lrow)
+        return cols, rows
 
     def init_system_matrix(self) -> csr_array:
-        c, r = self.compute_csr_indices()
+        c, r = self._get_sparse_coordinates()
         return csr_array((np.zeros_like(c), (r, c)), shape=(self.ndof, self.ndof), dtype=np.float64)
