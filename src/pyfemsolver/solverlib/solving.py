@@ -6,7 +6,7 @@ solve by static condensation, and solve boundary value problems using H1 finite 
 import numpy as np
 from numpy.typing import NDArray
 import time
-from scipy.sparse import linalg
+from scipy.sparse import linalg, csr_array, diags_array
 from .space import H1Space
 from .coefficientfunction import CoefficientFunction, ConstantCoefficientFunction
 from .forms import LinearForm
@@ -56,11 +56,11 @@ def invert_block_diagonal_matrix(a: NDArray[np.floating], block_size: int):
     n_blocks = a.shape[0] // block_size
     for block in range(n_blocks):
         a[(block * block_size) : ((block + 1) * block_size), (block * block_size) : ((block + 1) * block_size)] = np.linalg.inv(
-            a[(block * block_size) : ((block + 1) * block_size), (block * block_size) : ((block + 1) * block_size)]
+            a[(block * block_size) : ((block + 1) * block_size), (block * block_size) : ((block + 1) * block_size)].toarray()
         )
 
 
-def solve_linear_equations(a: NDArray[np.floating], f: NDArray[np.floating]) -> NDArray[np.floating]:
+def solve_linear_equations(a: csr_array, f: NDArray[np.floating]) -> NDArray[np.floating]:
     # u = np.zeros((a.shape[0],))
     # f = f.reshape(f.size)
     # r = f - a @ u
@@ -76,13 +76,15 @@ def solve_linear_equations(a: NDArray[np.floating], f: NDArray[np.floating]) -> 
     #     res = np.dot(r, a @ r)
     #     print(res)
     t0 = time.time()
-    direct_solve = True
+    direct_solve = False
     if direct_solve:
+        a = a.toarray()
         print("Solving linear equations with direct solver")
         u = np.linalg.inv(a) @ f
     else:
         print("Solving linear equations with cg solver")
-        u, n = linalg.cg(a, f)
+        diag_precond = diags_array(np.sqrt(a.diagonal().copy()) ** -1)
+        u, n = linalg.cg(A=a, b=f, M=diag_precond, rtol=1e-10)
         u = u.reshape(u.size, 1)
     t1 = time.time()
     print(f"Inverted system in {t1-t0} seconds.")
@@ -138,27 +140,19 @@ def solve_bvp(
     space: H1Space,
     show_condition_number: bool = False,
 ):
-    system_matrix = np.zeros((space.ndof, space.ndof))
+    # system_matrix = np.zeros((space.ndof, space.ndof))
+    system_matrix = space.init_system_matrix()
     f_vector = np.zeros((space.ndof, 1))
     print("Assembling")
     bilinearform.assemble(system_matrix)
     linearform.assemble(f_vector)
     print("Done")
 
-    # the system matrix is the sum of all involved bilinear forms
-    print("diagonally precondition")
-    diag_system_matrix = np.diag(system_matrix).copy()
-    print("got diag mass")
+    # the system matrix is the sum of all involved bilinear forms with
     # incoprorate bc on right side
     boundary_contribution = system_matrix[:, space.dirichlet_dofs] @ u[space.dirichlet_dofs]
     f_vector -= boundary_contribution
     print("updated boundary condition")
-    # diagonally scale system matrix and rhs
-    for i in space.free_dofs:
-        f_vector[i] /= np.sqrt(diag_system_matrix[i])
-        # for j in space.inner_dofs:
-        system_matrix[i, :] /= np.sqrt(diag_system_matrix[i])
-        system_matrix[:, i] /= np.sqrt(diag_system_matrix[i])
     # solve
     use_static_condensation = True
     if use_static_condensation:
@@ -167,8 +161,5 @@ def solve_bvp(
         )
     else:
         u[space.free_dofs] = solve_linear_equations(system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs])
-    # diagonally unscale solution
-    for i in space.free_dofs:
-        u[i] /= np.sqrt(diag_system_matrix[i])
     if show_condition_number:
         print(f"Cond(system matrix) = {np.linalg.cond(system_matrix[space.free_dofs,:][:,space.free_dofs])}")

@@ -3,3 +3,5 @@ report_output
 final_report.json
 plus_metadata.json
 .vscode
+pyfemsolver.egg-info/
+dist/

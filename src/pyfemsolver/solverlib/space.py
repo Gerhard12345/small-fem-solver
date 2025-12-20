@@ -1,9 +1,10 @@
 """ "H1 Finite element space module. Defines the H1Space class for managing finite element spaces, dofs, and assembly."""
 
-from typing import List
+from typing import List, Tuple
 
 import numpy as np
 from numpy.typing import NDArray
+from scipy.sparse import csr_array
 
 from .element import H1Fel
 from .meshing import Triangulation
@@ -144,3 +145,17 @@ class H1Space:
         :rtype: NDArray[floating[Any]]
         """
         return np.zeros((self.ndof, 1))
+
+    def compute_csr_indices(self) -> Tuple[List[int], List[int]]:
+        c = []
+        r = []
+        for ldofs in self.dofs:
+            lcol = list(np.matlib.repmat(ldofs, 1, len(ldofs)).reshape(-1))
+            lrow = list(np.repeat(ldofs, len(ldofs)))
+            c.extend(lcol)
+            r.extend(lrow)
+        return c, r
+
+    def init_system_matrix(self) -> csr_array:
+        c, r = self.compute_csr_indices()
+        return csr_array((np.zeros_like(c), (r, c)), shape=(self.ndof, self.ndof), dtype=np.float64)
