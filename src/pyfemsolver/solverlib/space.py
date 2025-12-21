@@ -38,13 +38,15 @@ class H1Space:
                     self.elements[i].flip_edge(j)
 
         dofs: List[List[int]] = [[] for _ in range(len(tri.trigs))]
-        self.vertex_dofs:List[List[int]] = [[i] for i in range(len(tri.points))]
-        self.edge_dofs:List[List[int]] = [[] for _ in range(len(tri.edges))]
-        self.bubble_dofs:List[List[int]] = [[] for _ in range(len(tri.trigs))]
+        self.vertex_dofs: List[List[int]] = [[i] for i in range(len(tri.points))]
+        self.edge_dofs: List[List[int]] = [[] for _ in range(len(tri.edges))]
+        self.bubble_dofs: List[List[int]] = [[] for _ in range(len(tri.trigs))]
         for i, edge in enumerate(tri.edges):
             self.edge_dofs[i] = [self.ndof_vertex + i * self.elements[0].ndof_facet + j for j in range(self.elements[0].ndof_facet)]
         for i, trig in enumerate(tri.trigs):
-            self.bubble_dofs[i] = [self.ndof_vertex + self.ndof_faces + i * self.elements[0].ndof_inner + j for j in range(self.elements[0].ndof_inner)]
+            self.bubble_dofs[i] = [
+                self.ndof_vertex + self.ndof_faces + i * self.elements[0].ndof_inner + j for j in range(self.elements[0].ndof_inner)
+            ]
         for i, trig in enumerate(tri.trigs):
             trigpoints = trig.points
             # For each triangle the first dofs are the vertex dofs. "Hat functions"
