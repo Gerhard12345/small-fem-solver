@@ -13,6 +13,14 @@ from .forms import LinearForm
 from .forms import BilinearForm
 from .integrators import EdgeMass, EdgeSource
 
+s = 0
+
+def cg_callback(u:NDArray[np.floating]):
+    pass
+    #global s
+    #s += 1
+    #print(s)
+        
 
 def set_boundary_values(dof_vector: NDArray[np.floating], space: H1Space, g: CoefficientFunction):
     """
@@ -60,7 +68,7 @@ def invert_block_diagonal_matrix(a: NDArray[np.floating], block_size: int):
         )
 
 
-def solve_linear_equations(a: csr_array, f: NDArray[np.floating]) -> NDArray[np.floating]:
+def solve_linear_equations(a: csr_array, f: NDArray[np.floating], precond:csr_array) -> NDArray[np.floating]:
     # u = np.zeros((a.shape[0],))
     # f = f.reshape(f.size)
     # r = f - a @ u
@@ -83,16 +91,19 @@ def solve_linear_equations(a: csr_array, f: NDArray[np.floating]) -> NDArray[np.
         u = np.linalg.inv(a) @ f
     else:
         print("Solving linear equations with cg solver")
-        diag_precond = diags_array(np.sqrt(a.diagonal().copy()) ** -1)
-        u, n = linalg.cg(A=a, b=f, M=diag_precond, rtol=1e-10)
+        #ev_max = linalg.eigs(diag_precond@a@diag_precond, k=1, which="LM", return_eigenvectors=False)
+        #ev_min = linalg.eigs(diag_precond@a@diag_precond, k=1, which="SM", return_eigenvectors=False)
+        #print(rf"extremal eigenvalues are \lambda_min = {ev_min} and \lambda_max = {ev_max}. Condition = {np.abs(ev_max)/np.abs(ev_min)}")
+        u, _ = linalg.cg(A=a, b=f, M=precond, rtol=1e-14, callback=cg_callback)
         u = u.reshape(u.size, 1)
     t1 = time.time()
     print(f"Inverted system in {t1-t0} seconds.")
+    print("max(|S*u-f|) = ", np.max(np.abs(a @ u - f)))
     return u
 
 
 def solve_by_condensation(
-    space: H1Space, system_matrix: NDArray[np.floating], f_vector: NDArray[np.floating], show_condition_number: bool = False
+    space: H1Space, system_matrix: NDArray[np.floating], f_vector: NDArray[np.floating], precond:csr_array, show_condition_number: bool = False
 ):
     """
     Solve the linear system of equations A * u = f for the inner dofs using static condensation.
@@ -119,18 +130,40 @@ def solve_by_condensation(
     a_ie = system_matrix[:ndof_edge, ndof_edge:]
     f_e = f_vector[:ndof_edge]
     f_i = f_vector[ndof_edge:]
+    precond_ee = precond[:ndof_edge, :ndof_edge]
+    precond_ii = precond[ndof_edge:, ndof_edge:]
+    precond_ei = precond[ndof_edge:, :ndof_edge]
+    precond_ie = precond[:ndof_edge, ndof_edge:]
     print("Invert bubble function matrix")
     if space.p >= 3:
         invert_block_diagonal_matrix(a_ii, block_size=bubble_functions_per_trig)
     print("done")
     condensed_matrix = a_ee - a_ie @ a_ii @ a_ei
+    condensed_precond = precond_ee - precond_ie @ precond_ii @ precond_ei
     if show_condition_number:
         print("Cond(condensed_matrix) = ", np.linalg.cond(condensed_matrix))
     condensed_f = f_e - a_ie @ a_ii @ f_i
-    u[:ndof_edge] = solve_linear_equations(condensed_matrix, condensed_f)
+    u[:ndof_edge] = solve_linear_equations(condensed_matrix, condensed_f, condensed_precond)
     u[ndof_edge:] = a_ii @ (f_i - a_ei @ u[:ndof_edge])
-    print("max(|S*u-f|) = ", np.max(np.abs(system_matrix @ u - f_vector)))
     return u
+
+
+def get_precond(space:H1Space, a:csr_array):
+    blockwise = True
+    if blockwise == False:
+        precond = diags_array(a.diagonal() ** -1).tocsr()
+    else:
+        precond = 0.0 * csr_array(a).copy()
+        blocks = []
+        blocks.extend(space.vertex_dofs)
+        blocks.extend(space.edge_dofs)
+        blocks.extend(space.bubble_dofs)
+        import scipy.linalg
+        for block in blocks:
+            BX,BY = np.meshgrid(block,block)
+            temp = scipy.linalg.sqrtm(np.linalg.inv((a[:,block][block,:].toarray())))
+            precond[BX,BY] = temp
+    return precond
 
 
 def solve_bvp(
@@ -152,14 +185,19 @@ def solve_bvp(
     # incoprorate bc on right side
     boundary_contribution = system_matrix[:, space.dirichlet_dofs] @ u[space.dirichlet_dofs]
     f_vector -= boundary_contribution
+    precond = get_precond(space, system_matrix)
+    system_matrix = system_matrix[:, space.free_dofs][space.free_dofs, :]
+    precond = precond[:, space.free_dofs][space.free_dofs, :]
+    f_vector = f_vector[space.free_dofs]
     print("updated boundary condition")
+    
     # solve
     use_static_condensation = True
     if use_static_condensation:
         u[space.free_dofs] = solve_by_condensation(
-            space, system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs], show_condition_number
+            space, system_matrix, f_vector, precond, show_condition_number
         )
     else:
-        u[space.free_dofs] = solve_linear_equations(system_matrix[space.free_dofs, :][:, space.free_dofs], f_vector[space.free_dofs])
+        u[space.free_dofs] = solve_linear_equations(system_matrix, f_vector, precond)
     if show_condition_number:
-        print(f"Cond(system matrix) = {np.linalg.cond(system_matrix[space.free_dofs,:][:,space.free_dofs])}")
+        print(f"Cond(system matrix) = {np.linalg.cond(system_matrix)}")
