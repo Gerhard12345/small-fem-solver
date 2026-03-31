@@ -40,11 +40,11 @@ Homepage = "https://github.com/pypa/sampleproject"
 Issues = "https://github.com/pypa/sampleproject/issues"
 
 [project.scripts]
-electro_static_potential = "examples.electro_static_potential:main"
-inhomogenous_bcs = "examples.inhomogenous_bcs:main"
-meshing_demo = "examples.meshing_demo:main"
-simple_sinusodial_solution = "examples.simple_sinusodial_solution:main"
-wave_equation = "examples.wave_equation:main"
+electrostatic_potential = "pyfemsolver.examples.electrostatic_potential:main"
+inhomogenous_bcs = "pyfemsolver.examples.inhomogenous_bcs:main"
+meshing_demo = "pyfemsolver.examples.meshing_demo:main"
+simple_sinusodial_solution = "pyfemsolver.examples.simple_sinusodial_solution:main"
+wave_equation = "pyfemsolver.examples.wave_equation:main"
 
 
 [tool.pytest.ini_options]
