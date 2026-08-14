@@ -11,7 +11,7 @@ from numpy.typing import NDArray
 from .coefficientfunction import CoefficientFunction
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .integrationrules import get_integration_rule_trig, get_integration_rule_line
-from .polynomials import integrated_jacobi_polynomial, barycentric_coordinates, barycentric_coordinates_line, edge_based_polynomials, h
+from .polynomials import integrated_jacobi_polynomial, barycentric_coordinates, barycentric_coordinates_line, edge_based_polynomials, h, dbarycentric_coordinates
 
 
 class H1Fel:
@@ -101,8 +101,7 @@ class H1Fel:
         nip = x.size
         dshape = np.zeros((3 * self.p + int((self.p - 2) * (self.p - 1) / 2), 2 * nip))
         delta = 1e-7
-        dshape[:3, :nip] = (barycentric_coordinates(x + delta, y) - barycentric_coordinates(x - delta, y)) / (2 * delta)
-        dshape[:3, nip:] = (barycentric_coordinates(x, y + delta) - barycentric_coordinates(x, y - delta)) / (2 * delta)
+        dshape[:3, :] = dbarycentric_coordinates(x, y)
         if self.p == 1:
             return dshape
         for i in range(3):

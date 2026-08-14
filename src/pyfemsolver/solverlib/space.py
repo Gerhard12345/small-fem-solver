@@ -13,22 +13,22 @@ from .meshing import Triangulation
 class H1Space:
     """H1 Finite element space class. Manages elements and dofs."""
 
-    def __init__(self, tri: Triangulation, p: int, dirichlet_indices: List[int]):
-        self.tri = tri
+    def __init__(self, mesh: Triangulation, p: int, dirichlet_indices: List[int]):
+        self.mesh = mesh
         self.p = p
         self.dirichlet_indices = dirichlet_indices
         # For each triangle the list contains a Finite element:
-        self.elements: List[H1Fel] = [H1Fel(order=p) for _ in range(len(tri.trigs))]
+        self.elements: List[H1Fel] = [H1Fel(order=p) for _ in range(len(mesh.trigs))]
         # The number of vertex dofs is equal to the number of vertices in the triangulation
-        self.ndof_vertex = len(tri.points)
+        self.ndof_vertex = len(mesh.points)
         # For each edge there are p-1 edge basis functions, thus the number of edge/face dofs is
-        self.ndof_faces = len(tri.edges) * (p - 1)
+        self.ndof_faces = len(mesh.edges) * (p - 1)
         # Finally, there are (p-1) * (p-2) / 2 inner basis functions in a triangle,
         # consequently the inner dofs compute as
-        self.ndof_inner = int(len(tri.trigs) * (p - 1) * (p - 2) / 2)
+        self.ndof_inner = int(len(mesh.trigs) * (p - 1) * (p - 2) / 2)
         # The total dof number is the sum of different dof types
         self.ndof = self.ndof_vertex + self.ndof_faces + self.ndof_inner
-        for i, trig in enumerate(tri.trigs):
+        for i, trig in enumerate(mesh.trigs):
             trigpoints = trig.points
             self.elements[i] = H1Fel(order=p)
             # For each local edge store if it needs to be flipped, i.e. store if
@@ -37,54 +37,174 @@ class H1Space:
                 if trigpoints[edge[0]] > trigpoints[edge[1]]:
                     self.elements[i].flip_edge(j)
 
-        dofs: List[List[int]] = [[] for _ in range(len(tri.trigs))]
-        self.vertex_dofs: List[List[int]] = [[i] for i in range(len(tri.points))]
-        self.edge_dofs: List[List[int]] = [[] for _ in range(len(tri.edges))]
-        self.bubble_dofs: List[List[int]] = [[] for _ in range(len(tri.trigs))]
-        for i, edge in enumerate(tri.edges):
+        dofs: List[List[int]] = [[] for _ in range(len(mesh.trigs))]
+        self.vertex_dofs: List[List[int]] = [[i] for i in range(len(mesh.points))]
+        self.edge_dofs: List[List[int]] = [[] for _ in range(len(mesh.edges))]
+        self.bubble_dofs: List[List[int]] = [[] for _ in range(len(mesh.trigs))]
+        for i, edge in enumerate(mesh.edges):
             self.edge_dofs[i] = [self.ndof_vertex + i * self.elements[0].ndof_facet + j for j in range(self.elements[0].ndof_facet)]
-        for i, trig in enumerate(tri.trigs):
+        for i, trig in enumerate(mesh.trigs):
             self.bubble_dofs[i] = [
                 self.ndof_vertex + self.ndof_faces + i * self.elements[0].ndof_inner + j for j in range(self.elements[0].ndof_inner)
             ]
-        for i, trig in enumerate(tri.trigs):
+        for i, trig in enumerate(mesh.trigs):
             trigpoints = trig.points
             # For each triangle the first dofs are the vertex dofs. "Hat functions"
             # These are numbered according to the vertex number.
-            dofs[i].extend([int(p) for p in trigpoints])
+            for trigpoint in trigpoints:
+                dofs[i].extend(self.vertex_dofs[trigpoint])
             # Next add those dofs associated with the edges of the element. These functions vanish on all nodes,
             # and edges except for one edge.
-            dofs[i].extend(
-                [
-                    self.ndof_vertex + edge * self.elements[i].ndof_facet + j
-                    for edge in tri.trigs[i].edges
-                    for j in range(self.elements[i].ndof_facet)
-                ]
-            )
+            for edge in trig.edges:
+                dofs[i].extend(self.edge_dofs[edge])
             # Finally, add the dofs for element bubble functions. These fucntions do not couple to other triangles,
             # they vanish on the complete triangle boundary.
-            dofs[i].extend(
-                [self.ndof_vertex + self.ndof_faces + i * self.elements[i].ndof_inner + j for j in range(self.elements[i].ndof_inner)]
-            )
+            dofs[i].extend(self.bubble_dofs[i])
 
-        boundary_dofs: List[List[int]] = [[]] * len(self.tri.boundary_edges)
+        boundary_dofs: List[List[int]] = [[]] * len(self.mesh.boundary_edges)
         dirichlet_dofs: List[int] = []
-        for i, edge in enumerate(tri.boundary_edges):
-            neighbour = edge.neighbouring_elements[0]
+        for i, edge in enumerate(mesh.boundary_edges):
             boundary_dofs[i] = list(edge.points)
-            boundary_dofs[i].extend(
-                [
-                    self.ndof_vertex + edge.global_edge_nr * self.elements[neighbour].ndof_facet + s
-                    for s in range(self.elements[neighbour].ndof_facet)
-                ]
-            )
+            boundary_dofs[i].extend(self.edge_dofs[edge.global_edge_nr])
             if edge.region in self.dirichlet_indices:
                 dirichlet_dofs.extend(boundary_dofs[i])
 
         self.boundary_dofs = boundary_dofs  # dofs assoziated with the domain boundary
         self.dofs = dofs  # all dofs
-        self.dirichlet_dofs = sorted(list(set(dirichlet_dofs)))
+        self.dirichlet_dofs = list(set(dirichlet_dofs))
         self.free_dofs = [i for i in range(self.ndof) if i not in self.dirichlet_dofs]
+
+    def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: csr_array, trig_index: int):
+        """
+        Map the local element dofs to the global ones for matrices.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_matrix: The local element matrix to be mapped
+        :type element_matrix: NDArray[np.floating]
+        :param global_matrix: The global matrix to which the local matrix is mapped
+        :type global_matrix: NDArray[np.floating]
+        :return: None
+        """
+        dx, dy = np.meshgrid(self.dofs[trig_index], self.dofs[trig_index])
+        global_matrix[dy, dx] += element_matrix
+
+    def local_to_global_boundary(self, element_matrix: NDArray[np.floating], global_matrix: csr_array, edge_index: int):
+        """
+        Map the local boundary dofs to the global ones for matrices.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_matrix: The local element matrix to be mapped
+        :type element_matrix: NDArray[np.floating]
+        :param global_matrix: The global matrix to which the local matrix is mapped
+        :type global_matrix: NDArray[np.floating]
+        :return: None
+        """
+        dx, dy = np.meshgrid(self.boundary_dofs[edge_index], self.boundary_dofs[edge_index])
+        global_matrix[dy, dx] += element_matrix
+
+    def local_to_global_vector(self, element_vector: NDArray[np.floating], global_vector: NDArray[np.floating], trig_index: int):
+        """
+        Map the local element dofs to the global ones.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_vector: The local element vector to be mapped
+        :type element_vector: NDArray[np.floating]
+        :param global_vector: The global vector to which the local vector is mapped
+        :type global_vector: NDArray[np.floating]
+        :return: None
+        """
+        global_vector[self.dofs[trig_index]] += element_vector
+
+    def local_to_global_boundary_vector(self, element_vector: NDArray[np.floating], global_vector: NDArray[np.floating], edge_index: int):
+        """
+        Map the local boundary dofs to the global ones.
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :param element_vector: The local element vector to be mapped
+        :type element_vector: NDArray[np.floating]
+        :param global_vector: The global vector to which the local vector is mapped
+        :type global_vector: NDArray[np.floating]
+        :return: None
+        """
+        global_vector[self.boundary_dofs[edge_index]] += element_vector
+
+    def create_gridfunction(self) -> NDArray[np.floating]:
+        """
+        Docstring for create_gridfunction
+
+        :param self: H1 finite element space instance
+        :type self: H1Space
+        :return: The dof vector representing the gridfunction
+        :rtype: NDArray[floating[Any]]
+        """
+        return np.zeros((self.ndof, 1))
+
+    def _get_sparse_coordinates(self) -> Tuple[List[int], List[int]]:
+        cols = []
+        rows = []
+        for local_dofs in self.dofs:
+            ldofs = [dof for dof in local_dofs if dof not in self.boundary_dofs]
+            lcol = list(np.matlib.repmat(ldofs, 1, len(ldofs)).reshape(-1))
+            lrow = list(np.repeat(ldofs, len(ldofs)))
+            cols.extend(lcol)
+            rows.extend(lrow)
+        return cols, rows
+
+    def init_system_matrix(self) -> csr_array:
+        c, r = self._get_sparse_coordinates()
+        return csr_array((np.zeros_like(c), (r, c)), shape=(self.ndof, self.ndof), dtype=np.float64)
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+class L2Space:
+    """H1 Finite element space class. Manages elements and dofs."""
+
+    def __init__(self, mesh: Triangulation, p: int, dirichlet_indices: List[int]):
+        self.mesh = mesh
+        self.p = p
+        self.dirichlet_indices = dirichlet_indices
+        # For each triangle the list contains a Finite element:
+        self.elements: List[H1Fel] = [H1Fel(order=p) for _ in range(len(mesh.trigs))]
+        # The number of vertex dofs is equal to the number of vertices in the triangulation
+        self.ndof_vertex = 3 * len(mesh.trigs)
+        # For each edge there are p-1 edge basis functions, thus the number of edge/face dofs is
+        self.ndof_faces = 3 * len(mesh.trigs) * (p - 1)
+        # Finally, there are (p-1) * (p-2) / 2 inner basis functions in a triangle,
+        # consequently the inner dofs compute as
+        self.ndof_inner = int(len(mesh.trigs) * (p - 1) * (p - 2) / 2)
+        # The total dof number is the sum of different dof types
+        self.ndof = self.ndof_vertex + self.ndof_faces + self.ndof_inner
+        for i, trig in enumerate(mesh.trigs):
+            trigpoints = trig.points
+            self.elements[i] = H1Fel(order=p)
+            # For each local edge store if it needs to be flipped, i.e. store if
+            # the global index of the start point is smaller than the global index of the endpoint
+            for j, edge in enumerate(self.elements[i].edges):
+                if trigpoints[edge[0]] > trigpoints[edge[1]]:
+                    self.elements[i].flip_edge(j)
+
+        self.dofs: List[List[int]] = [[] for _ in range(len(mesh.trigs))]
+        # 3 vertex doifs per element, 3 * (p - 1) edge dofs and the remaining bubble functions:
+        dofs_per_trig = 3 + 3 * (p - 1) + int((p - 1) * (p - 2) / 2)
+        for i in range(len(mesh.trigs)):
+            self.dofs[i] = [i * dofs_per_trig + j for j in range(dofs_per_trig)]
 
     def local_to_global(self, element_matrix: NDArray[np.floating], global_matrix: csr_array, trig_index: int):
         """

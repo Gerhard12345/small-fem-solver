@@ -123,7 +123,7 @@ def solve_by_condensation(
     print("Solve by static condensation")
     u = np.zeros((len(space.free_dofs), 1))
     bubble_functions_per_trig = int(1 / 2 * (space.p - 1) * (space.p - 2))
-    ndof_bubble = len(space.tri.trigs) * bubble_functions_per_trig
+    ndof_bubble = len(space.mesh.trigs) * bubble_functions_per_trig
     ndof_edge = int(len(space.free_dofs) - ndof_bubble)
     a_ee = system_matrix[:ndof_edge, :ndof_edge]
     a_ii = system_matrix[ndof_edge:, ndof_edge:]

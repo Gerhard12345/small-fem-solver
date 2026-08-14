@@ -77,6 +77,20 @@ def barycentric_coordinates(x: NDArray[np.floating], y: NDArray[np.floating]) ->
     """
     return 1 / 4 * np.array([1 - 2 * x - y, 1 + 2 * x - y, 2 + 2 * y])
 
+def dbarycentric_coordinates(x: NDArray[np.floating], y: NDArray[np.floating]) -> NDArray[np.floating]:
+    """
+    Computes the barycentric coordinates for a triangle with corners (-1,-1),(1,-1),(0,1).
+
+    :param x: Evaluation points in x direction
+    :type x: NDArray[np.floating]
+    :param y: Evaluation points in y direction
+    :type y: NDArray[np.floating]
+    :return: Evaluated barycentric coordinates
+    :rtype: NDArray[float64]
+    """
+    return 1 / 4 * np.array([[- 2] * x.size + [-1] * x.size,[2] * x.size+ [-1] * y.size, [0] * x.size + [2] * y.size])
+
+
 
 def barycentric_coordinates_line(t: NDArray[np.floating]) -> NDArray[np.floating]:
     """

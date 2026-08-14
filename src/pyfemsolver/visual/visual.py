@@ -46,7 +46,7 @@ def show_grid_function(
     ax = fig.add_subplot(1, 1, 1)
     min_val: float = 1e16
     max_val: float = -1e16
-    for i, trig in enumerate(space.tri.trigs):
+    for i, trig in enumerate(space.mesh.trigs):
         x = np.linspace(-1, 1, n_subdivision)
         y = np.linspace(-1, 1, n_subdivision)
         X, Y = np.meshgrid(x, y)
@@ -54,11 +54,11 @@ def show_grid_function(
         X_t = X_t.reshape(X_t.size)
         Y_t = Y_t.reshape(Y_t.size)
         s = barycentric_coordinates(X_t, Y_t)
-        node_0 = np.array(space.tri.points[trig.points[0]].coordinates)
+        node_0 = np.array(space.mesh.points[trig.points[0]].coordinates)
         node_0.shape = (2, 1)
-        node_1 = np.array(space.tri.points[trig.points[1]].coordinates)
+        node_1 = np.array(space.mesh.points[trig.points[1]].coordinates)
         node_1.shape = (2, 1)
-        node_2 = np.array(space.tri.points[trig.points[2]].coordinates)
+        node_2 = np.array(space.mesh.points[trig.points[2]].coordinates)
         node_2.shape = (2, 1)
         trig_nodes = node_0 * s[0, :] + node_1 * s[1, :] + node_2 * s[2, :]
         fel = space.elements[i]
@@ -126,18 +126,18 @@ def show_edge_shape(trig_number: int, space: H1Space, ax: Axes3D | None = None):
     if not ax:
         use_new_axes = True
         fig = plt.figure()  # type: ignore
-    trig = space.tri.trigs[trig_number]
+    trig = space.mesh.trigs[trig_number]
     for i, edge_nr in enumerate(trig.edges):
         if use_new_axes:
             ax = fig.add_subplot(1, 3, i + 1, projection="3d")  # type: ignore
         shape = space.elements[trig_number].edge_shape_functions(t)
-        edge = space.tri.edges[edge_nr]
-        xy = space.tri.points[edge.points[0]].coordinates * x + space.tri.points[edge.points[1]].coordinates * y
+        edge = space.mesh.edges[edge_nr]
+        xy = space.mesh.points[edge.points[0]].coordinates * x + space.mesh.points[edge.points[1]].coordinates * y
         for j in shape:
             ax.plot(xy[:, 0], xy[:, 1], j)  # type: ignore
-        trigs = [trig.points for trig in space.tri.trigs]
-        x_coords = [point.coordinates[0] for point in space.tri.points]
-        y_coords = [point.coordinates[1] for point in space.tri.points]
+        trigs = [trig.points for trig in space.mesh.trigs]
+        x_coords = [point.coordinates[0] for point in space.mesh.points]
+        y_coords = [point.coordinates[1] for point in space.mesh.points]
         ax.triplot(x_coords, y_coords, trigs)  # type: ignore
         ax.plot(x_coords, y_coords, "o")  # type: ignore
 
@@ -193,9 +193,9 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
     ax_dx = fig.add_subplot(1, 2, 1)
     ax_dy = fig.add_subplot(1, 2, 2)
 
-    trigs = [trig.points for trig in space.tri.trigs]
-    x_coords = [point.coordinates[0] for point in space.tri.points]
-    y_coords = [point.coordinates[1] for point in space.tri.points]
+    trigs = [trig.points for trig in space.mesh.trigs]
+    x_coords = [point.coordinates[0] for point in space.mesh.points]
+    y_coords = [point.coordinates[1] for point in space.mesh.points]
 
     # Setup both axes with mesh
     for ax in [ax_dx, ax_dy]:
@@ -205,18 +205,18 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
     min_val = 1e16
     max_val = -1e16
 
-    for i, trig in enumerate(space.tri.trigs):
+    for i, trig in enumerate(space.mesh.trigs):
         x = np.linspace(-1, 1, n_subdivision)
         y = np.linspace(-1, 1, n_subdivision)
         X, Y = np.meshgrid(x, y)
         X_t, Y_t = duffy(X, Y)
         s = barycentric_coordinates(X_t.flatten(), Y_t.flatten())
 
-        node_0 = np.array(space.tri.points[trig.points[0]].coordinates)
+        node_0 = np.array(space.mesh.points[trig.points[0]].coordinates)
         node_0.shape = (2, 1)
-        node_1 = np.array(space.tri.points[trig.points[1]].coordinates)
+        node_1 = np.array(space.mesh.points[trig.points[1]].coordinates)
         node_1.shape = (2, 1)
-        node_2 = np.array(space.tri.points[trig.points[2]].coordinates)
+        node_2 = np.array(space.mesh.points[trig.points[2]].coordinates)
         node_2.shape = (2, 1)
         trig_nodes = node_0 * s[0, :] + node_1 * s[1, :] + node_2 * s[2, :]
 
@@ -225,7 +225,7 @@ def show_gradient_of_grid_function(u: NDArray[np.floating], space: H1Space, vran
 
         # Apply Jacobian inverse transformation to map gradients from reference to physical space
         # Create element transformation to get Jacobian inverse
-        points = np.array([space.tri.points[p].coordinates for p in trig.points])
+        points = np.array([space.mesh.points[p].coordinates for p in trig.points])
         eltrans = ElementTransformationTrig(points, trig.region)
         Jinv = eltrans.get_jacobian_inverse()
 

@@ -40,9 +40,9 @@ class Mass(BilinearFormIntegrator):
         :type global_mass: NDArray[np.floating]
         :return: None
         """
-        for i, trig in enumerate(self.space.tri.trigs):
-            print(f"Mass matrix, element {i + 1}/{len(self.space.tri.trigs)}", end="\r")
-            trig_coords = np.array([self.space.tri.points[p].coordinates for p in trig.points])
+        for i, trig in enumerate(self.space.mesh.trigs):
+            print(f"Mass matrix, element {i + 1}/{len(self.space.mesh.trigs)}", end="\r")
+            trig_coords = np.array([self.space.mesh.points[p].coordinates for p in trig.points])
             eltrans = ElementTransformationTrig(trig_coords, trig.region)
             element_matrix = self.space.elements[i].calc_mass_matrix(eltrans, self.coefficient)
             self.space.local_to_global(element_matrix, global_matrix, i)
@@ -62,9 +62,9 @@ class EdgeMass(BilinearFormIntegrator):
         :type global_boundary_mass: NDArray[np.floating]
         :return: None
         """
-        for i, edge in enumerate(self.space.tri.boundary_edges):
-            print(f"Boundary mass, element {i + 1}/{len(self.space.tri.boundary_edges)}", end="\r")
-            edge_coords = np.array([self.space.tri.points[p].coordinates for p in edge.points])
+        for i, edge in enumerate(self.space.mesh.boundary_edges):
+            print(f"Boundary mass, element {i + 1}/{len(self.space.mesh.boundary_edges)}", end="\r")
+            edge_coords = np.array([self.space.mesh.points[p].coordinates for p in edge.points])
             eltrans = ElementTransformationLine(edge_coords, edge.region)
             element_matrix = self.space.elements[i].calc_edge_mass_matrix(eltrans, self.coefficient)
             self.space.local_to_global_boundary(element_matrix, global_matrix, i)
@@ -84,9 +84,9 @@ class Laplace(BilinearFormIntegrator):
         :type global_gradu_gradv: NDArray[np.floating]
         :return: None
         """
-        for i, trig in enumerate(self.space.tri.trigs):
-            print(f"Stiffness, element {i + 1}/{len(self.space.tri.trigs)}", end="\r")
-            trig_coords = np.array([self.space.tri.points[p].coordinates for p in trig.points])
+        for i, trig in enumerate(self.space.mesh.trigs):
+            print(f"Stiffness, element {i + 1}/{len(self.space.mesh.trigs)}", end="\r")
+            trig_coords = np.array([self.space.mesh.points[p].coordinates for p in trig.points])
             eltrans = ElementTransformationTrig(trig_coords, trig.region)
             element_matrix = self.space.elements[i].calc_gradu_gradv_matrix(eltrans, self.coefficient)
             self.space.local_to_global(element_matrix, global_matrix, i)
@@ -108,9 +108,9 @@ class Source(LinearFormIntegrator):
         :type f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
         :return: None
         """
-        for i, trig in enumerate(self.space.tri.trigs):
-            print(f"Load vector, element {i + 1}/{len(self.space.tri.trigs)}", end="\r")
-            trig_coords = np.array([self.space.tri.points[p].coordinates for p in trig.points])
+        for i, trig in enumerate(self.space.mesh.trigs):
+            print(f"Load vector, element {i + 1}/{len(self.space.mesh.trigs)}", end="\r")
+            trig_coords = np.array([self.space.mesh.points[p].coordinates for p in trig.points])
             eltrans = ElementTransformationTrig(trig_coords, trig.region)
             element_vector = self.space.elements[i].calc_element_vector(eltrans, self.coefficient)
             self.space.local_to_global_vector(element_vector, global_matrix, i)
@@ -132,9 +132,9 @@ class EdgeSource(LinearFormIntegrator):
         :type f: Callable[[NDArray[np.floating], NDArray[np.floating]], NDArray[np.floating]]
         :return: None
         """
-        for i, edge in enumerate(self.space.tri.boundary_edges):
-            print(f"Boundary load vector, element {i + 1}/{len(self.space.tri.boundary_edges)}", end="\r")
-            edge_coords = np.array([self.space.tri.points[p].coordinates for p in edge.points])
+        for i, edge in enumerate(self.space.mesh.boundary_edges):
+            print(f"Boundary load vector, element {i + 1}/{len(self.space.mesh.boundary_edges)}", end="\r")
+            edge_coords = np.array([self.space.mesh.points[p].coordinates for p in edge.points])
             eltrans = ElementTransformationLine(edge_coords, edge.region)
             element_vector = self.space.elements[i].calc_edge_element_vector(eltrans, self.coefficient)
             self.space.local_to_global_boundary_vector(element_vector, global_matrix, i)
