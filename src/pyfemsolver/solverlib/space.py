@@ -159,20 +159,6 @@ class H1Space:
         return csr_array((np.zeros_like(c), (r, c)), shape=(self.ndof, self.ndof), dtype=np.float64)
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 class L2Space:
     """H1 Finite element space class. Manages elements and dofs."""
 

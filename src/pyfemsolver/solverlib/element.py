@@ -11,7 +11,14 @@ from numpy.typing import NDArray
 from .coefficientfunction import CoefficientFunction
 from .elementtransformation import ElementTransformationTrig, ElementTransformationLine
 from .integrationrules import get_integration_rule_trig, get_integration_rule_line
-from .polynomials import integrated_jacobi_polynomial, barycentric_coordinates, barycentric_coordinates_line, edge_based_polynomials, h, dbarycentric_coordinates
+from .polynomials import (
+    integrated_jacobi_polynomial,
+    barycentric_coordinates,
+    barycentric_coordinates_line,
+    edge_based_polynomials,
+    h,
+    dbarycentric_coordinates,
+)
 
 
 class H1Fel:

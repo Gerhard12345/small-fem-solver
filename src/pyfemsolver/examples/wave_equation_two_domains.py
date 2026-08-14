@@ -92,4 +92,4 @@ u = space.create_gridfunction()
 set_boundary_values(dof_vector=u, space=space, g=u_bound)
 solve_bvp(bilinearform=bilinearform, linearform=linearform, u=u, space=space)
 ax, mini, maxi = show_grid_function(u, space, vrange=(-1.75, 1.8), n_subdivision=16)
-plt.show()  # type:ignore
+plt.show()  # type: ignore

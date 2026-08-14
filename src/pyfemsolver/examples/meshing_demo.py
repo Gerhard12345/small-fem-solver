@@ -54,11 +54,11 @@ if __name__ == "__main__":
     num_iterations = 15  # pylint:disable=C0103
     for _ in range(num_iterations):
         points = iterate_mesh_optimization(points, valid_triangles, geometry, is_inner_point)
-    plt.figure()  # type:ignore
+    plt.figure()  # type: ignore
     # Plot triangulation
-    plt.triplot(points[:, 0], points[:, 1], valid_triangles)  # type:ignore
-    plt.scatter(points[:, 0], points[:, 1], color="r")  # type:ignore
-    plt.axis("equal")  # type:ignore
+    plt.triplot(points[:, 0], points[:, 1], valid_triangles)  # type: ignore
+    plt.scatter(points[:, 0], points[:, 1], color="r")  # type: ignore
+    plt.axis("equal")  # type: ignore
 
     x_coords = np.linspace(0.01, 3.99, 200)
     y_coords = np.linspace(0.01, 1.99, 100)
@@ -71,14 +71,14 @@ if __name__ == "__main__":
 
     X, Y = np.meshgrid(x_coords, y_coords)
     # Plotting Mesh Size as a 3D Surface
-    fig = plt.figure(figsize=(10, 6))  # type:ignore
+    fig = plt.figure(figsize=(10, 6))  # type: ignore
     ax = fig.add_subplot(111, projection="3d")
-    ax.plot_surface(X, Y, mesh_sizes, cmap="viridis")  # type:ignore
+    ax.plot_surface(X, Y, mesh_sizes, cmap="viridis")  # type: ignore
 
-    ax.set_xlabel("X Coordinate")  # type:ignore
-    ax.set_ylabel("Y Coordinate")  # type:ignore
-    ax.set_zlabel("Mesh Size")  # type:ignore
-    ax.set_title("3D Surface Plot of Mesh Size Function")  # type:ignore
+    ax.set_xlabel("X Coordinate")  # type: ignore
+    ax.set_ylabel("Y Coordinate")  # type: ignore
+    ax.set_zlabel("Mesh Size")  # type: ignore
+    ax.set_title("3D Surface Plot of Mesh Size Function")  # type: ignore
     points2, simplices2 = refine_triangulation(points, geometry, max_gradient)
     is_inner_point = [False] * len(points_from_lines) + [True] * (len(points2) - len(points_from_lines))
     num_iterations = 5  # pylint:disable=C0103
@@ -97,9 +97,9 @@ if __name__ == "__main__":
                     is_boundary_edge[i] = True
                 break
 
-    plt.figure()  # type:ignore
+    plt.figure()  # type: ignore
     # Plot triangulation
-    plt.triplot(points2[:, 0], points2[:, 1], simplices2)  # type:ignore
-    plt.scatter(points2[:, 0], points2[:, 1], color="r")  # type:ignore
-    plt.axis("equal")  # type:ignore
-    plt.show()  # type:ignore
+    plt.triplot(points2[:, 0], points2[:, 1], simplices2)  # type: ignore
+    plt.scatter(points2[:, 0], points2[:, 1], color="r")  # type: ignore
+    plt.axis("equal")  # type: ignore
+    plt.show()  # type: ignore

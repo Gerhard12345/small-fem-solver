@@ -8,7 +8,6 @@ from ..visual.visual import show_shape, show_edge_shape, show_mesh
 from ..solverlib.meshing import generate_mesh
 from ..solverlib.geometry import Geometry, Line, Region
 
-
 lines: List[Line] = []
 
 lines.append(Line(start=(-6, -6), end=(6, -6), left_region=1, right_region=0, h=4, boundary_index=1))
@@ -30,4 +29,4 @@ dof = 38  # pylint:disable=C0103
 ax, mini, maxi = show_shape(dof, space, vrange=(-0.192, 0.192), n_subdivision=80)
 show_mesh(tri=t, ax=ax)
 show_edge_shape(15, space)
-plt.show()  # type:ignore
+plt.show()  # type: ignore

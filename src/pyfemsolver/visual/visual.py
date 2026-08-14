@@ -76,7 +76,7 @@ def show_grid_function(
             vmin=vrange[0],
             vmax=vrange[1],
         )
-    fig.colorbar(c)  # type:ignore
+    fig.colorbar(c)  # type: ignore
     print(f"Minimum value of grid function = {min_val}, maximum value of grid function = {max_val}")
 
     return ax, min_val, max_val

@@ -131,7 +131,7 @@ def is_point_on_line_segment(point: Tuple[float, float], line: Line, tolerance: 
     closest_point_on_line = np.array(line.start) + line_vec * projection / line_length
     dist_to_line = np.linalg.norm(point - closest_point_on_line)
 
-    return dist_to_line <= tolerance and -tolerance <= projection <= line_length + tolerance  # type:ignore
+    return dist_to_line <= tolerance and -tolerance <= projection <= line_length + tolerance  # type: ignore
 
 
 def generate_inner_points(region: Region, lines: List[Line], tolerance: float = 1e-6) -> List[Tuple[float, float]]:
@@ -454,7 +454,7 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
     is_not_boundary = is_inner_point_lines + [True] * (len(points2) - len(points_from_lines))
     is_boundary = [not ip for ip in is_not_boundary]
 
-    edge_definitions: List[Edge] = [None] * len(edges)  # type:ignore
+    edge_definitions: List[Edge] = [None] * len(edges)  # type: ignore
     trig_definitions: List[Triangle] = []
     found_edges: List[int] = []
     j = 0
@@ -465,7 +465,7 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
         # in the global set of edges, i.e. self.trig_edges[i] = [a,b,c] means
         # the i-th triangle consists of the global edges with indices a,b and c.
         for edge in trig_local_edges:
-            edge_nr = edges.index(edge)  # type:ignore
+            edge_nr = edges.index(edge)  # type: ignore
             if edge_nr in found_edges:
                 first_neighbour = edge_definitions[edge_nr].neighbouring_elements[0]
                 edge_definitions[edge_nr].neighbouring_elements = [first_neighbour, i]
@@ -479,13 +479,13 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
                         break
                 found_edges.append(edge_nr)
                 edge_definitions[edge_nr] = Edge(
-                    edge, [i], is_boundary_edge=is_boundary_edge[edge_nr], global_edge_nr=edge_nr, region=region  # type:ignore
+                    edge, [i], is_boundary_edge=is_boundary_edge[edge_nr], global_edge_nr=edge_nr, region=region  # type: ignore
                 )
         region = get_region_for_centroid(np.mean(points2[trig, :], axis=0), geometry)
         trig_definitions.append(
             Triangle(
                 points=tuple(trig.astype(int).tolist()),
-                edges=tuple(edges.index(edge) for edge in trig_local_edges),  # type:ignore
+                edges=tuple(edges.index(edge) for edge in trig_local_edges),  # type: ignore
                 region=region,
             )
         )
@@ -494,7 +494,7 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
 
     point_definitions: List[Point] = []
     for i, point in enumerate(points2):
-        point_definitions.append(Point(coordinates=tuple(point), is_boundary_point=is_boundary[i]))  # type:ignore
+        point_definitions.append(Point(coordinates=tuple(point), is_boundary_point=is_boundary[i]))  # type: ignore
 
     boundary_points = [point for point in point_definitions if point.is_boundary_point]
 

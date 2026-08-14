@@ -30,5 +30,5 @@ class VariableCoefficientFunction(CoefficientFunction):
         self.f_shape = f_shape
 
     def __call__(self, x: NDArray[np.floating], y: NDArray[np.floating], region_index: int) -> NDArray[np.floating]:
-        values = np.array([self.functions[region_index](xi, yi) for xi, yi in zip(x.reshape(x.size), y.reshape(y.size))])  # type:ignore
+        values = np.array([self.functions[region_index](xi, yi) for xi, yi in zip(x.reshape(x.size), y.reshape(y.size))])  # type: ignore
         return values.reshape(x.size * self.f_shape[0], self.f_shape[1])

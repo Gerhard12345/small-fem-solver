@@ -13,7 +13,6 @@ from ..solverlib.coefficientfunction import ConstantCoefficientFunction, DomainC
 from ..solverlib.forms import BilinearForm, LinearForm
 from ..solverlib.integrators import Laplace
 
-
 height = 0.6  # pylint:disable=C0103
 width = 2.4  # pylint:disable=C0103
 center_x = [0, 0]
@@ -122,4 +121,4 @@ for dirichlet_indices in ([1, 2, 3], [2, 3]):
     solve_bvp(bilinearform=bilinearform, linearform=LinearForm([]), u=u, space=space)
     ax, mini, maxi = show_grid_function(u, space, vrange=(-100, 100), n_subdivision=40)
     ax_x, ax_y, mini, maxi = show_gradient_of_grid_function(u, space, vrange=(-100, 100), n_subdivision=40)
-plt.show()  # type:ignore
+plt.show()  # type: ignore

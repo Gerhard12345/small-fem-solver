@@ -64,7 +64,8 @@ class DoubleSlitGeometry(Geometry):
         lines (List[Line]): List of lines defining the geometry.
         regions (List[Region]): List of regions in the geometry.
     """
-    def __init__(self, slit_width: float=2.4, slit_height: float=0.6, slit_distance: float=4.0, domain_size: float=12.0):
+
+    def __init__(self, slit_width: float = 2.4, slit_height: float = 0.6, slit_distance: float = 4.0, domain_size: float = 12.0):
         """
         Initializes a DoubleSlitGeometry instance with 2 domains.
 
@@ -78,12 +79,48 @@ class DoubleSlitGeometry(Geometry):
         height = slit_height  # pylint:disable=C0103
         width = slit_width  # pylint:disable=C0103
         center_x = [0, 0]
-        center_y = [-slit_distance/2, slit_distance/2]
+        center_y = [-slit_distance / 2, slit_distance / 2]
         lines: List[Line] = []
-        lines.append(Line(start=(-domain_size/2, -domain_size/2), end=(domain_size/2, -domain_size/2), left_region=1, right_region=0, h=0.5, boundary_index=1))
-        lines.append(Line(start=(domain_size/2, -domain_size/2), end=(domain_size/2, domain_size/2), left_region=1, right_region=0, h=0.5, boundary_index=1))
-        lines.append(Line(start=(domain_size/2, domain_size/2), end=(-domain_size/2, domain_size/2), left_region=1, right_region=0, h=0.5, boundary_index=1))
-        lines.append(Line(start=(-domain_size/2, domain_size/2), end=(-domain_size/2, -domain_size/2), left_region=1, right_region=0, h=0.5, boundary_index=1))
+        lines.append(
+            Line(
+                start=(-domain_size / 2, -domain_size / 2),
+                end=(domain_size / 2, -domain_size / 2),
+                left_region=1,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(domain_size / 2, -domain_size / 2),
+                end=(domain_size / 2, domain_size / 2),
+                left_region=1,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(domain_size / 2, domain_size / 2),
+                end=(-domain_size / 2, domain_size / 2),
+                left_region=1,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(-domain_size / 2, domain_size / 2),
+                end=(-domain_size / 2, -domain_size / 2),
+                left_region=1,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
         # Plate 1
         lines.append(
             Line(
@@ -178,7 +215,15 @@ class SingleSlitGeometryWith3Domains(Geometry):
         lines (List[Line]): List of lines defining the geometry.
         regions (List[Region]): List of regions in the geometry.
     """
-    def __init__(self, slit_width: float=2.0, slit_height: float=2.0, inner_domain_size: float=8.0, intermediate_domain_size: float = 16.0, outer_domain_size: float=20.0):
+
+    def __init__(
+        self,
+        slit_width: float = 2.0,
+        slit_height: float = 2.0,
+        inner_domain_size: float = 8.0,
+        intermediate_domain_size: float = 16.0,
+        outer_domain_size: float = 20.0,
+    ):
         """
         Initializes a DoubleSlitGeometry instance.
 
@@ -193,21 +238,128 @@ class SingleSlitGeometryWith3Domains(Geometry):
         center_x = 0
         center_y = 0
         lines: List[Line] = []
-        lines.append(Line(start=(-outer_domain_size/2, -outer_domain_size/2), end=(outer_domain_size/2, -outer_domain_size/2), left_region=3, right_region=0, h=0.5, boundary_index=1))
-        lines.append(Line(start=(outer_domain_size/2, -outer_domain_size/2), end=(outer_domain_size/2, outer_domain_size/2), left_region=3, right_region=0, h=0.5, boundary_index=1))
-        lines.append(Line(start=(outer_domain_size/2, outer_domain_size/2), end=(-outer_domain_size/2, outer_domain_size/2), left_region=3, right_region=0, h=0.5, boundary_index=1))
-        lines.append(Line(start=(-outer_domain_size/2, outer_domain_size/2), end=(-outer_domain_size/2, -outer_domain_size/2), left_region=3, right_region=0, h=0.5, boundary_index=1))
+        lines.append(
+            Line(
+                start=(-outer_domain_size / 2, -outer_domain_size / 2),
+                end=(outer_domain_size / 2, -outer_domain_size / 2),
+                left_region=3,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(outer_domain_size / 2, -outer_domain_size / 2),
+                end=(outer_domain_size / 2, outer_domain_size / 2),
+                left_region=3,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(outer_domain_size / 2, outer_domain_size / 2),
+                end=(-outer_domain_size / 2, outer_domain_size / 2),
+                left_region=3,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(-outer_domain_size / 2, outer_domain_size / 2),
+                end=(-outer_domain_size / 2, -outer_domain_size / 2),
+                left_region=3,
+                right_region=0,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
 
-        lines.append(Line(start=(-intermediate_domain_size/2, -intermediate_domain_size/2), end=(intermediate_domain_size/2, -intermediate_domain_size/2), left_region=2, right_region=3, h=0.5, boundary_index=1))
-        lines.append(Line(start=(intermediate_domain_size/2, -intermediate_domain_size/2), end=(intermediate_domain_size/2, intermediate_domain_size/2), left_region=2, right_region=3, h=0.5, boundary_index=1))
-        lines.append(Line(start=(intermediate_domain_size/2, intermediate_domain_size/2), end=(-intermediate_domain_size/2, intermediate_domain_size/2), left_region=2, right_region=3, h=0.5, boundary_index=1))
-        lines.append(Line(start=(-intermediate_domain_size/2, intermediate_domain_size/2), end=(-intermediate_domain_size/2, -intermediate_domain_size/2), left_region=2, right_region=3, h=0.5, boundary_index=1))
+        lines.append(
+            Line(
+                start=(-intermediate_domain_size / 2, -intermediate_domain_size / 2),
+                end=(intermediate_domain_size / 2, -intermediate_domain_size / 2),
+                left_region=2,
+                right_region=3,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(intermediate_domain_size / 2, -intermediate_domain_size / 2),
+                end=(intermediate_domain_size / 2, intermediate_domain_size / 2),
+                left_region=2,
+                right_region=3,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(intermediate_domain_size / 2, intermediate_domain_size / 2),
+                end=(-intermediate_domain_size / 2, intermediate_domain_size / 2),
+                left_region=2,
+                right_region=3,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(-intermediate_domain_size / 2, intermediate_domain_size / 2),
+                end=(-intermediate_domain_size / 2, -intermediate_domain_size / 2),
+                left_region=2,
+                right_region=3,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
 
-        lines.append(Line(start=(-inner_domain_size/2, -inner_domain_size/2), end=(inner_domain_size/2, -inner_domain_size/2), left_region=1, right_region=2, h=0.5, boundary_index=1))
-        lines.append(Line(start=(inner_domain_size/2, -inner_domain_size/2), end=(inner_domain_size/2, inner_domain_size/2), left_region=1, right_region=2, h=0.5, boundary_index=1))
-        lines.append(Line(start=(inner_domain_size/2, inner_domain_size/2), end=(-inner_domain_size/2, inner_domain_size/2), left_region=1, right_region=2, h=0.5, boundary_index=1))
-        lines.append(Line(start=(-inner_domain_size/2, inner_domain_size/2), end=(-inner_domain_size/2, -inner_domain_size/2), left_region=1, right_region=2, h=0.5, boundary_index=1))
-
+        lines.append(
+            Line(
+                start=(-inner_domain_size / 2, -inner_domain_size / 2),
+                end=(inner_domain_size / 2, -inner_domain_size / 2),
+                left_region=1,
+                right_region=2,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(inner_domain_size / 2, -inner_domain_size / 2),
+                end=(inner_domain_size / 2, inner_domain_size / 2),
+                left_region=1,
+                right_region=2,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(inner_domain_size / 2, inner_domain_size / 2),
+                end=(-inner_domain_size / 2, inner_domain_size / 2),
+                left_region=1,
+                right_region=2,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
+        lines.append(
+            Line(
+                start=(-inner_domain_size / 2, inner_domain_size / 2),
+                end=(-inner_domain_size / 2, -inner_domain_size / 2),
+                left_region=1,
+                right_region=2,
+                h=0.5,
+                boundary_index=1,
+            )
+        )
 
         # Plate 1
         lines.append(
