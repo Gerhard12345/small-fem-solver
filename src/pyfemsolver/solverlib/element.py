@@ -30,7 +30,7 @@ class H1Fel:
     # Class-level integration rule instances (shared across all instances)
     def __init__(self, order: int):
         self.p = order
-        self.edges = [(0, 1), (1, 2), (2, 0)]
+        self.edges = [(1, 2), (2, 0), (0, 1)]
         self.flipped_edge = [False, False, False]
         self.ndof_vertex = 3
         self.ndof_faces = 3 * (self.p - 1)

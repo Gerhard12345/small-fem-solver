@@ -148,7 +148,7 @@ def h(p: int, x: NDArray[np.floating], y: NDArray[np.floating]) -> List[NDArray[
     :rtype: List[NDArray[float64]]
     """
     l = barycentric_coordinates(x, y)
-    l1 = 2 * l[2] - 1
+    l1 = 2 * l[0] - 1
     vals_1: List[NDArray[np.floating]] = []
     for i in range(2, p):
         s = integrated_jacobi_polynomial(p - i, l1, 2 * i - 1)[1:, :]

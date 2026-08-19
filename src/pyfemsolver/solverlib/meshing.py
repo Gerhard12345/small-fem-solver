@@ -460,7 +460,7 @@ def generate_mesh(geometry: Geometry, max_gradient: float = 0.05) -> Triangulati
     j = 0
     for i, trig in enumerate(simplices2):
         # and map them to the global points
-        trig_local_edges = [tuple(sorted((int(a), int(b)))) for a, b in zip(trig, np.roll(trig, -1))]
+        trig_local_edges = [tuple(sorted((int(a), int(b)))) for a, b in zip(np.roll(trig,-2), np.roll(trig, -1))]
         # self.trig_edges stores for each triangle the index of the edges
         # in the global set of edges, i.e. self.trig_edges[i] = [a,b,c] means
         # the i-th triangle consists of the global edges with indices a,b and c.
